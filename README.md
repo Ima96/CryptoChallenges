@@ -5,9 +5,9 @@
 
 ## The CryptoPals Crypto Challenges
 ### Set 1: Basics
-- [ ] Convert hex to base64
-- [ ] Fixed XOR
-- [ ] Single-byte XOR cipher
+- [x] Convert hex to base64
+- [x] Fixed XOR
+- [x] Single-byte XOR cipher
 - [ ] Detect single-character XOR
 - [ ] Implement repeating-key XOR
 - [ ] Break repeating-key XOR
