@@ -16,7 +16,7 @@
 
 ### Set 2: Block crypto
 - [x] Implement PKCS#7 padding
-- [ ] Implement CBC mode
+- [x] Implement CBC mode
 - [ ] An ECB/CBC detection oracle
 - [ ] Byte-at-a-time ECB decryption (Simple)
 - [ ] ECB cut-and-paste
