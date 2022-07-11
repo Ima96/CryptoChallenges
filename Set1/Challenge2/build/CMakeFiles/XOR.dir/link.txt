@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/XOR.dir/src/main.c.o  -o XOR  -Wl,-rpath,/home/zer0/Cryptopals/CryptoChallenges/Set1/Challenge2/build/build build/libencodings.so build/libcrypto.so 

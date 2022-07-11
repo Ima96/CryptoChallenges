@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zer0/Cryptopals/CryptoChallenges/Set1/Challenge1/src/main.c
+stdio.h
+-
+stdlib.h
+-
+encodings.h
+/home/zer0/Cryptopals/CryptoChallenges/Set1/Challenge1/src/encodings.h
+
+/home/zer0/Cryptopals/CryptoChallenges/common/encodings.h
+stdio.h
+-
+stdint.h
+-
+stdlib.h
+-
+math.h
+-
+

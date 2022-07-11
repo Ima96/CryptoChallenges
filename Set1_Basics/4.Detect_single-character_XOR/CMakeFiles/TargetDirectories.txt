@@ -1,3 +1,0 @@
-/home/ima96/CryptoPals/CryptoChallenges/Set1_Basics/4.Detect_single-character_XOR/CMakeFiles/rebuild_cache.dir
-/home/ima96/CryptoPals/CryptoChallenges/Set1_Basics/4.Detect_single-character_XOR/CMakeFiles/edit_cache.dir
-/home/ima96/CryptoPals/CryptoChallenges/Set1_Basics/4.Detect_single-character_XOR/CMakeFiles/run.dir

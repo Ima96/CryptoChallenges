@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -g  -shared -Wl,-soname,libencodings.so -o libencodings.so CMakeFiles/encodings.dir/encodings.c.o 
