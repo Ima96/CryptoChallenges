@@ -1,1 +1,0 @@
-/usr/bin/cc -g   CMakeFiles/hex2base64.dir/src/main.c.o  -o hex2base64  -Wl,-rpath,/home/zer0/Cryptopals/CryptoChallenges/Set1/Challenge1/build/build build/libencodings.so 
