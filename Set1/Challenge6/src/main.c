@@ -51,81 +51,6 @@ void B64Test(void)
       printf("[DEBUG] Base64 decode working fine!\n");
 }
 
-void Guess_RKXOR_KeySize(uint8_t const * const bin_ciphertext,
-                           uint16_t const bin_cipherlen,
-                           uint8_t keysize_attempts[4])
-{
-   uint8_t *buf1 = NULL;
-   uint8_t *buf2 = NULL;
-   uint16_t hamm_dist = 0;
-   float norm_hamm = 0;
-   float best_norms[4] = {1000};
-
-   for (uint8_t KEYSIZE = 2; KEYSIZE <= 40; ++KEYSIZE)
-   {
-      double sum = 0.0;
-      uint16_t blocks = 0;
-      buf1 = realloc(buf1, KEYSIZE * sizeof(uint8_t));
-      buf2 = realloc(buf2, KEYSIZE * sizeof(uint8_t));
-
-      for (int i = 0; i < bin_cipherlen; i += 2*KEYSIZE)
-      {
-         memcpy(buf1, &bin_ciphertext[i], KEYSIZE);
-         memcpy(buf2, &bin_ciphertext[i+KEYSIZE], KEYSIZE);
-
-         ComputeBufHammingDist(buf1, KEYSIZE, buf2, KEYSIZE, &hamm_dist);
-         sum += hamm_dist;
-      }
-      blocks = bin_cipherlen / (KEYSIZE * 2);
-      norm_hamm = sum / (KEYSIZE * blocks);
-      
-      #if defined(DEBUG_APP)
-      printf("[DEBUG] Averaged & normalized distance for KEYSIZE = %d: %f\n", KEYSIZE, norm_hamm);
-      #endif
-
-      if (norm_hamm < best_norms[0])
-      {
-         best_norms[3] = best_norms[2];
-         keysize_attempts[3] = keysize_attempts[2];
-         best_norms[2] = best_norms[1];
-         keysize_attempts[2] = keysize_attempts[1];
-         best_norms[1] = best_norms[0];
-         keysize_attempts[1] = keysize_attempts[0];
-         best_norms[0] = norm_hamm;
-         keysize_attempts[0] = KEYSIZE;
-      }
-      else if (norm_hamm < best_norms[1])
-      {
-         best_norms[3] = best_norms[2];
-         keysize_attempts[3] = keysize_attempts[2];
-         best_norms[2] = best_norms[1];
-         keysize_attempts[2] = keysize_attempts[1];
-         best_norms[1] = norm_hamm;
-         keysize_attempts[1] = KEYSIZE;
-      }
-      else if (norm_hamm < best_norms[2])
-      {
-         best_norms[3] = best_norms[2];
-         keysize_attempts[3] = keysize_attempts[2];
-         best_norms[2] = norm_hamm;
-         keysize_attempts[2] = KEYSIZE;
-      }
-      else if (norm_hamm < best_norms[3])
-      {
-         best_norms[3] = norm_hamm;
-         keysize_attempts[3] = KEYSIZE;
-      }
-
-      norm_hamm = 0;
-   }
-   if (buf1)
-      free(buf1);
-   if (buf2)
-      free(buf2);
-   
-   return;
-}
-
 int main(int argc, char * argv[])
 {
    #if defined(DEBUG_APP)
@@ -228,6 +153,7 @@ int main(int argc, char * argv[])
       EncryptRepeatingKeyXor(bin_ciphertext, (bin_cipherlen/2), possible_keys[i], curr_keysize, test_text);
 
       #if defined(DEBUG_APP)
+      printf("[DEBUG] Obtained key attempt --> %.*s\n", curr_keysize, possible_keys[i]);
       printf("[DEBUG] Test decrypted text:\n%.*s\n", (bin_cipherlen/2), test_text);
       #endif
 

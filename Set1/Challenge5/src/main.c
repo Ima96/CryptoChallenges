@@ -53,7 +53,9 @@ int main(int argc, char * argv[])
    printf("Ciphertext:\n\"%s\"\n", ciphertext);
 
    uint8_t *hex_ciphertext = Encode2Hex(ciphertext, line_len-1);
-   printf("Final HEX encoded:\n\"%s\"\n", hex_ciphertext);
+   printf("Final HEX encoded:\n\"%.*s\"\n", (line_len-1)*2, hex_ciphertext);
+   for (int i = 0; i < line_len-1; ++i)
+      printf("%02X ", ciphertext[i]);
 
    if (line)
       free(line);

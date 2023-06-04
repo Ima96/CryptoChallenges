@@ -103,6 +103,10 @@ crypto_status ComputeBufHammingDist(uint8_t const * const buf1,
                                     uint16_t * res_dist
                                     );
 
+void Guess_RKXOR_KeySize(uint8_t const * const bin_ciphertext,
+                           uint16_t const bin_cipherlen,
+                           uint8_t keysize_attempts[4]);
+
 void Init_OpenSSL(void);
 
 void Cleanup_OpenSSL(void);

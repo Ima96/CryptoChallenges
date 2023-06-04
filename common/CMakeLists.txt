@@ -10,6 +10,12 @@ add_library(misc SHARED
 	misc.h
    misc.c)
 
+find_package(OpenSSL REQUIRED)
+target_link_libraries(
+	crypto
+	OpenSSL::SSL
+)
+
 target_include_directories(encodings PUBLIC 
 	${CMAKE_CURRENT_LIST_DIR})
 
