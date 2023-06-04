@@ -71,3 +71,64 @@ uint8_t *Hex2Base64(uint8_t *HexEncoded, int size)
 
     return base64_str;
 }
+
+uint8_t *Encode2Hex(uint8_t *ciphertext, uint16_t len)
+{
+   uint8_t *binHex = calloc(len*2, sizeof(uint8_t));
+
+   uint32_t cont = 0;
+   for (int i = 0; i < len; i++)
+   {
+      binHex[cont] = (ciphertext[i] >> 4) & 0x0F;
+      binHex[cont+1] = ciphertext[i] & 0x0F;
+      cont += 2; 
+   }
+   uint8_t *asciiHex = BinHex2Ascii(binHex, len*2);
+
+   return asciiHex;
+}
+
+uint16_t B64DecodeSize(uint8_t const * const buf, uint16_t len)
+{
+   uint16_t res_len = (len * 3) / 4;
+
+   for (uint16_t i = (len-1); i > 0; i--)
+   {
+      if (buf[i] == '=')
+         res_len--;
+      else
+         break;
+   }
+
+   return res_len;
+}
+
+uint8_t *DecodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_size)
+{
+   uint16_t res_len = B64DecodeSize(buf, len);
+   uint8_t *decoded = calloc(res_len, sizeof(uint8_t));
+
+   int v;
+   for (uint16_t i = 0, j = 0; i < len; i += 4, j += 3) 
+   {
+      v = Base64Invs[buf[i]-43];
+      v = (v << 6) | Base64Invs[buf[i+1]-43];
+      v = buf[i+2] == '=' ? v << 6 : (v << 6) | Base64Invs[buf[i+2]-43];
+      v = buf[i+3] == '=' ? v << 6 : (v << 6) | Base64Invs[buf[i+3]-43];
+
+      decoded[j] = (v >> 16) & 0xFF;
+      if (buf[i+2] != '=')
+         decoded[j+1] = (v >> 8) & 0xFF;
+      if (buf[i+3] != '=')
+         decoded[j+2] = v & 0xFF;
+   }
+
+   if (res_size != NULL)
+      *res_size = res_len;
+   return decoded;
+}
+
+// uint8_t *EncodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_len)
+// {
+
+// }

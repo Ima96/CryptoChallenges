@@ -8,11 +8,11 @@
 - [x] Convert hex to base64
 - [x] Fixed XOR
 - [x] Single-byte XOR cipher
-- [ ] Detect single-character XOR
-- [ ] Implement repeating-key XOR
-- [ ] Break repeating-key XOR (almost)
-- [ ] AES in ECB mode
-- [ ] Detect AES in ECB mode
+- [x] Detect single-character XOR
+- [x] Implement repeating-key XOR
+- [x] Break repeating-key XOR
+- [x] AES in ECB mode
+- [x] Detect AES in ECB mode
 
 ### Set 2: Block crypto
 - [ ] Implement PKCS#7 padding
