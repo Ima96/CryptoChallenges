@@ -17,7 +17,7 @@
 /* Defines */
 #define BYTE_SIZE 2
 
-#define AES_ECB_KEY_SIZE   16
+#define AES128_KEY_SIZE   16
 
 /* Handy MACROs */
 #ifdef DEBUG_CRYPT
@@ -118,9 +118,27 @@ crypto_status DecryptAES_ECB_OpenSSL(uint8_t const * const ciphertext,
                                        int *plaintext_len
                                        );
 
+crypto_status EncryptAES_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
+                                       uint16_t const u16_plainlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t **ppu8_cipherext,
+                                       int32_t * pi32_cipherlen
+                                       );
+
 crypto_status Detect_AES_ECB(uint8_t const * const pu8_buff,
                               uint16_t const u16_buff_len,
                               uint16_t const u16_block_size
                               );
+
+crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
+                        uint8_t ** pu8_outbuf, uint32_t * pu32_padded_size);
+
+crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
+                                       uint16_t const u16_cipherlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const pu8_plaintxt,
+                                       uint16_t * const pu16_plainlen
+                                       );
 
 #endif

@@ -360,6 +360,8 @@ crypto_status DecryptAES_ECB_OpenSSL(uint8_t const * const ciphertext,
       return CRYPTO_ERR_SSL;
    }
 
+   EVP_CIPHER_CTX_set_padding(ctx, 0);
+
    plaintext_temp = malloc(cipherlen * sizeof(uint8_t));
    if (1 != EVP_DecryptUpdate(ctx, plaintext_temp, &outlen, ciphertext, (int)cipherlen))
    {
@@ -380,6 +382,54 @@ crypto_status DecryptAES_ECB_OpenSSL(uint8_t const * const ciphertext,
    EVP_CIPHER_CTX_free(ctx);
 
    *plaintext = plaintext_temp;
+   return CRYPTO_OK;
+}
+
+crypto_status EncryptAES_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
+                                       uint16_t const u16_plainlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t **ppu8_cipherext,
+                                       int32_t * pi32_cipherlen
+                                       )
+{
+   
+
+   EVP_CIPHER_CTX *ctx;
+   uint8_t *pu8_ciphertext_temp = NULL;
+   int outlen;
+
+   if (!(ctx = EVP_CIPHER_CTX_new()))
+   {
+      printf("<ERROR> Could not create new cipher ctx!\n");
+      return CRYPTO_ERR_SSL;
+   }
+
+   if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, pu8_key, NULL))
+   {
+      printf("<ERROR> Could not initialize cipher!!\n");
+      return CRYPTO_ERR_SSL;
+   }
+
+   pu8_ciphertext_temp = malloc(u16_plainlen * sizeof(uint8_t));
+   if (1 != EVP_EncryptUpdate(ctx, pu8_ciphertext_temp, &outlen, pu8_plaintext, (int)u16_plainlen))
+   {
+      printf("<ERROR> Could not update Encrypt Routine!!\n");
+      return CRYPTO_ERR_SSL;
+   }
+   *pi32_cipherlen = outlen;
+
+   if (1 != EVP_EncryptFinal_ex(ctx, pu8_ciphertext_temp + outlen, &outlen))
+   {
+      printf("<ERROR> Could not Finish Encrypt Routine!!\n");
+      return CRYPTO_ERR_SSL;
+   }
+   *pi32_cipherlen += outlen;
+
+   pu8_ciphertext_temp[*pi32_cipherlen] = '\0';
+
+   EVP_CIPHER_CTX_free(ctx);
+
+   *ppu8_cipherext = pu8_ciphertext_temp;
    return CRYPTO_OK;
 }
 
@@ -407,4 +457,98 @@ crypto_status Detect_AES_ECB(uint8_t const * const pu8_buff,
    }
 
    return CRYPTO_NO_DETECTED;
+}
+
+crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
+                        uint8_t ** pu8_outbuf, uint32_t * pu32_padded_size)
+{
+   uint8_t *pu8_temp_buf = NULL;
+
+   if (pu8_buf == NULL || pu32_padded_size == NULL)
+      return CRYPTO_ERR;
+
+   if (0 == (u32_buf_size % u16_block_size))
+   {
+      pu8_temp_buf = realloc(pu8_temp_buf, u32_buf_size * sizeof(uint8_t));
+      memcpy(pu8_temp_buf, pu8_buf, u32_buf_size);
+      *pu8_outbuf = pu8_temp_buf;
+      *pu32_padded_size = u32_buf_size;
+      return CRYPTO_OK;
+   }
+
+   uint8_t u16_num_pads = 0;
+   if (u32_buf_size < u16_block_size)
+      u16_num_pads = u16_block_size - u32_buf_size;
+   else
+      u16_num_pads =  u16_block_size - (u32_buf_size % u16_block_size);
+   
+   pu8_temp_buf = realloc(pu8_temp_buf, (u32_buf_size + u16_num_pads) * sizeof(uint8_t));
+   if (pu8_temp_buf == NULL)
+      return CRYPTO_ERR;
+   
+   memcpy(pu8_temp_buf, pu8_buf, u32_buf_size);
+   for (int i = 0; i < u16_num_pads; ++i)
+      pu8_temp_buf[u32_buf_size+i] = u16_num_pads;
+   
+   *pu32_padded_size = u32_buf_size + u16_num_pads;
+   *pu8_outbuf = pu8_temp_buf;
+   return CRYPTO_OK;
+}
+
+crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
+                                       uint16_t const u16_cipherlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const pu8_plaintxt,
+                                       uint16_t * const pu16_plainlen
+                                       )
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   uint8_t a16_u8_iv[AES128_KEY_SIZE] = {0};
+   memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
+
+   if (0 != (u16_cipherlen % AES128_KEY_SIZE))
+   {
+      printf("<ERROR> Ciphertext is not a multiple of the AES128 block size (16)...\n");
+      return e_status;
+   }
+
+   uint16_t u16_num_iter = u16_cipherlen / AES128_KEY_SIZE;
+   uint8_t * pu8_temp_buf = NULL;
+   int i_templen = 0;
+
+   e_status = DecryptAES_ECB_OpenSSL(pu8_ciphertxt, u16_cipherlen, pu8_key, &pu8_temp_buf, &i_templen);
+   if (e_status != CRYPTO_OK)
+   {
+      printf("<ERROR> Could not decrypt ciphertext...\n");
+      if (pu8_temp_buf)
+      {
+         free(pu8_temp_buf);
+         pu8_temp_buf = NULL;
+      }
+      return e_status;
+   }
+
+   for (int i = 0; i < u16_num_iter; ++i)
+   {
+
+      e_status = FixedXOR(a16_u8_iv, &pu8_temp_buf[i*AES128_KEY_SIZE], AES128_KEY_SIZE, AES128_KEY_SIZE, &pu8_temp_buf[i*AES128_KEY_SIZE]);
+      if (e_status != CRYPTO_OK)
+      {
+         printf("<ERROR> Fixed XOR went wrong...\n");
+         if (pu8_temp_buf)
+         {
+            free(pu8_temp_buf);
+            pu8_temp_buf = NULL;
+         }
+         break;
+      }
+      
+      memcpy(a16_u8_iv, &pu8_ciphertxt[i*AES128_KEY_SIZE], AES128_KEY_SIZE);
+   }
+
+   *pu8_plaintxt = pu8_temp_buf;
+   *pu16_plainlen = i_templen;
+   return e_status;
 }

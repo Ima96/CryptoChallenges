@@ -3,12 +3,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "encodings.h"
-#include "crypto.h"
+#include <encodings/encodings.h>
+#include <crypto/crypto.h>
 
 void main(int argc, char *argv[])
 {

@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.20)
+
+add_subdirectory(Challenge1 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge1)
+add_subdirectory(Challenge2 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge2)
+add_subdirectory(Challenge3 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge3)
+add_subdirectory(Challenge4 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge4)
+add_subdirectory(Challenge5 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge5)
+add_subdirectory(Challenge6 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge6)
+add_subdirectory(Challenge7 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge7)
+add_subdirectory(Challenge8 ${CMAKE_CURRENT_BINARY_DIR}/.objs/Set1/Challenge8)

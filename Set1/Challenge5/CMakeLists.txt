@@ -18,8 +18,14 @@ if (build_type STREQUAL debug)
   add_definitions(-DDEBUG_APP)
 endif()
 
-add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
+#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
 
 add_executable(encript-rkxor ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 target_link_libraries(encript-rkxor encodings crypto)
+
+add_custom_command(
+   TARGET encript-rkxor POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/plaintext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
+   COMMENT "Copying Challenge 5 necessary files to output location..."
+)

@@ -10,13 +10,13 @@
 - [x] Single-byte XOR cipher
 - [x] Detect single-character XOR
 - [x] Implement repeating-key XOR
-- [ ] Break repeating-key XOR
-- [ ] AES in ECB mode
-- [ ] Detect AES in ECB mode
+- [x] Break repeating-key XOR
+- [x] AES in ECB mode
+- [x] Detect AES in ECB mode
 
 ### Set 2: Block crypto
-- [ ] Implement PKCS#7 padding
-- [ ] Implement CBC mode
+- [x] Implement PKCS#7 padding
+- [x] Implement CBC mode
 - [ ] An ECB/CBC detection oracle
 - [ ] Byte-at-a-time ECB decryption (Simple)
 - [ ] ECB cut-and-paste
