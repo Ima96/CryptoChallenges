@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(Set2_ImplementCBC)
+project(Set2_ECB-CBC_Oracle)
 
 option(DEBUG_ENCODINGS "Enable debugging in encoding library" OFF)
 option(DEBUG_CRYPTO "Enable debugging in crypto library" OFF)
@@ -20,19 +20,13 @@ endif()
 
 #add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
 
-add_executable(decrypt-cbc ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
+add_executable(oracle11 ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(
-   decrypt-cbc
+   oracle11
    OpenSSL::SSL 
    encodings 
    crypto
    misc
-)
-
-add_custom_command(
-   TARGET decrypt-cbc POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext10.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
-   COMMENT "Copying Challenge10 necessary files to output location..."
 )

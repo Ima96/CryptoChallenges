@@ -35,6 +35,12 @@ typedef enum crypto_status
     CRYPTO_NO_DETECTED  =  3
 } crypto_status;
 
+typedef enum Ecrypto_aes_mode
+{
+   E_AES128_ECB   = 0,
+   E_AES128_CBC   = 1
+} crypto_aes_mode_t;
+
 /* Original frequencies from God's know where... */
 /* static float english_freq[26] = {
     0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,  // A-G
@@ -111,14 +117,14 @@ void Init_OpenSSL(void);
 
 void Cleanup_OpenSSL(void);
 
-crypto_status DecryptAES_ECB_OpenSSL(uint8_t const * const ciphertext,
+crypto_status DecryptAES128_ECB_OpenSSL(uint8_t const * const ciphertext,
                                        uint16_t const cipherlen,
                                        uint8_t const * const key,
                                        uint8_t **plaintext,
                                        int *plaintext_len
                                        );
 
-crypto_status EncryptAES_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
+crypto_status EncryptAES128_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
                                        uint16_t const u16_plainlen,
                                        uint8_t const * const pu8_key,
                                        uint8_t **ppu8_cipherext,
@@ -140,5 +146,22 @@ crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
                                        uint8_t ** const pu8_plaintxt,
                                        uint16_t * const pu16_plainlen
                                        );
+
+crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
+                                       uint16_t const u16_plainlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const ppu8_ciphertxt,
+                                       uint16_t * const pu16_cipherlen
+                                       );
+
+crypto_status GeneratePseudoRandomBytes(uint8_t * const rnd_buf, 
+                                          uint16_t const n_bytes);
+
+crypto_status GenRndAES128Key(uint8_t * const rnd_buf);
+
+crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message, 
+                                    uint16_t const u16_msg_sz,
+                                    crypto_aes_mode_t * const e_detected_mode);
 
 #endif

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <misc/misc.h>
 #include <crypto/crypto.h>
 #include <encodings/encodings.h>
@@ -34,7 +35,6 @@ int main(int argc, char * argv[])
    uint8_t a16_u8_key[AES128_KEY_SIZE] = {'Y', 'E', 'L', 'L', 'O', 'W', ' ', 'S', 'U', 'B', 'M', 'A', 'R', 'I', 'N', 'E'};
    uint8_t a16_u8_iv[16] = {'\0'};
    uint8_t * pu8_plaintext = NULL;
-   uint8_t * pu8_ciphertext_padded = NULL;
    uint16_t u16_plainlen = 0;
 
    Init_OpenSSL();
@@ -53,6 +53,20 @@ int main(int argc, char * argv[])
 
    printf("Deciphered text: \n%.*s\n", u16_plainlen, pu8_plaintext);
 
+   uint8_t * pu8_reciphertext = NULL;
+   uint16_t u16_recipherlen = 0;
+   e_status = EncryptAES128_CBC_OpenSSL(pu8_plaintext, u16_plainlen, a16_u8_key, a16_u8_iv, &pu8_reciphertext, &u16_recipherlen);
+
+   if (u16_cipherlen != u16_recipherlen)
+      printf("Cipher lengths do not coincide...\n");
+   else
+      printf("Same cipher lengths achieved!!\n");
+
+   if (0 != memcmp(pu8_ciphertext, pu8_reciphertext, u16_cipherlen))
+      printf("Different ciphertexts obtained...\n");
+   else
+      printf("Same ciphertexts obtained!!\n");
+
    /* Clean-up */
    if (pu8_file_contents)
       free(pu8_file_contents);
@@ -60,6 +74,8 @@ int main(int argc, char * argv[])
       free(pu8_ciphertext);
    if (pu8_plaintext)
       free(pu8_plaintext);
+   if (pu8_reciphertext)
+      free(pu8_reciphertext);
    
    Cleanup_OpenSSL();
 

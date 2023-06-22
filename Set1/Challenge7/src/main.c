@@ -54,13 +54,35 @@ void main(int argc, char *argv[])
 
    Init_OpenSSL();
    uint8_t *a_u8_plaintext = NULL;
-   if (CRYPTO_OK != DecryptAES_ECB_OpenSSL(bin_ciphertext, bin_cipherlen, key, &a_u8_plaintext, &plaintext_len))
+   if (CRYPTO_OK != DecryptAES128_ECB_OpenSSL(bin_ciphertext, bin_cipherlen, key, &a_u8_plaintext, &plaintext_len))
    {
       printf("<ERROR> Something went wrong...\n");
       goto cleanup;
    }
 
    printf("Decrypted message:\n\"%s\"\n", a_u8_plaintext);
+
+   uint8_t * pu8_reciphertxt = NULL;
+   int32_t i32_recipherlen = 0;
+   if (CRYPTO_OK != EncryptAES128_ECB_OpenSSL(a_u8_plaintext, plaintext_len, key, &pu8_reciphertxt, &i32_recipherlen))
+   {
+      printf("<ERROR> Something went wrong...\n");
+      goto cleanup;
+   }
+
+   if (bin_cipherlen == i32_recipherlen)
+      printf("Same cipher length achieved!!\n");
+   else
+      printf("NOT the same cipher lengths achieved...\n");
+
+   if (0 == memcmp(bin_ciphertext, pu8_reciphertxt, bin_cipherlen))
+      printf("Same cipher text obtained!!\n");
+   else
+   {
+      printf("NOT the same cipher text obtained...\n");
+      for (int i = 0; i < i32_recipherlen; ++i)
+         printf("%02X vs %02X \n", bin_ciphertext[i], pu8_reciphertxt[i]);
+   }
 
    /* Clean-up */
 cleanup:
