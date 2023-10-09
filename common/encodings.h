@@ -22,7 +22,7 @@
 #endif
 
 /* Private global variables */
-static char Base64Digits[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char Base64Digits[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int Base64Invs[] = { 
    62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 
@@ -56,6 +56,6 @@ uint8_t *Encode2Hex(uint8_t *ciphertext, uint16_t len);
 
 uint8_t *DecodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_size);
 
-uint8_t *EncodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_len);
+uint8_t *EncodeBase64(uint8_t const * const pu8_buf, uint16_t const u16_len, uint16_t *u16_res_size);
 
 #endif

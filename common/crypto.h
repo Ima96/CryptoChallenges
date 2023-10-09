@@ -21,7 +21,7 @@
 
 /* Handy MACROs */
 #ifdef DEBUG_CRYPT
-#define DEBUG_CRYPTO(fmt, ...) {fflush(stdout); fprintf(stdout, "%s:%d: " fmt, __FUNCTION__, __LINE__, ## __VA_ARGS__); fflush(stdout); }
+#define DEBUG_CRYPTO(fmt, ...) {fflush(stdout); fprintf(stdout, "[CRYPTO_DEBUG] %s(%d): " fmt, __FUNCTION__, __LINE__, ## __VA_ARGS__); fflush(stdout); }
 #else 
 #define DEBUG_CRYPTO(...)
 #endif
@@ -32,7 +32,8 @@ typedef enum crypto_status
     CRYPTO_OK           =  0,
     CRYPTO_ERR          =  1,
     CRYPTO_ERR_SSL      =  2,
-    CRYPTO_NO_DETECTED  =  3
+    CRYPTO_NO_DETECTED  =  3,
+    CRYPTO_INVAL        =  4
 } crypto_status;
 
 typedef enum Ecrypto_aes_mode
@@ -163,5 +164,14 @@ crypto_status GenRndAES128Key(uint8_t * const rnd_buf);
 crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message, 
                                     uint16_t const u16_msg_sz,
                                     crypto_aes_mode_t * const e_detected_mode);
+
+crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
+                                             uint16_t const u16_bufferlen,
+                                             uint8_t ** pu8_ciphertext,
+                                             int32_t * const i32_cipherlen);
+
+crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize);
+
+crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len);
 
 #endif

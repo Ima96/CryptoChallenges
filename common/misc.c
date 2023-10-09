@@ -103,3 +103,12 @@ uint8_t **readFileLines(FILE *fip, uint16_t *line_count)
    *line_count = ln_num;
    return temp_buf;
 }
+
+void PrintHex(uint8_t const * const pu8_buff, int32_t const i32_buff_len)
+{
+   for (int32_t i32_idx = 0; i32_idx < i32_buff_len; i32_idx++)
+   {
+      printf("%02X ", pu8_buff[i32_idx]);
+   }
+   printf("\n");
+}

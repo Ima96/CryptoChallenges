@@ -325,7 +325,8 @@ void Init_OpenSSL(void)
 {
    ERR_load_crypto_strings();
    OpenSSL_add_all_ciphers();
-   OPENSSL_config(NULL);
+   // Deprecated...
+   //OPENSSL_config(NULL);
 }
 
 void Cleanup_OpenSSL(void)
@@ -471,6 +472,9 @@ crypto_status Detect_AES_ECB(uint8_t const * const pu8_buff,
       }
    }
 
+   if (pu8_curr_block)
+      free(pu8_curr_block);
+
    return CRYPTO_NO_DETECTED;
 }
 
@@ -593,7 +597,8 @@ crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
    }
    else
    {
-      pu8_plaintxt_pad = pu8_plaintxt;
+      pu8_plaintxt_pad = (uint8_t *) calloc(u16_plainlen, sizeof(uint8_t));
+      memcpy(pu8_plaintxt_pad, pu8_plaintxt, u16_plainlen);
       u32_plainlen_pad = u16_plainlen;
    }
 
@@ -641,6 +646,12 @@ crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
       free(pu8_block_cipher_res);
    }
    pu8_block_cipher_res = NULL;
+
+   if (pu8_plaintxt_pad)
+   {
+      free(pu8_plaintxt_pad);
+   }
+   pu8_plaintxt_pad = NULL;
 
    if (e_status == CRYPTO_OK)
    {
@@ -715,7 +726,7 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
             case E_AES128_ECB:
                printf("[INFO] Using ECB\n");
                SStatus = EncryptAES128_ECB_OpenSSL(pu8_msg_alt, u16_msg_sz, au8_rnd_aes128_key, &pu8_ciphertext, 
-                                                      &u16_cipherlen);
+                                                      (int32_t *) &u16_cipherlen);
                break;
             
             case E_AES128_CBC:
@@ -760,4 +771,327 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
    }
 
    return SStatus;
+}
+
+static uint8_t * vf_pu8_static_key = NULL;
+crypto_status staticAesEcbKeyCheckAndInit(void)
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   if (vf_pu8_static_key == NULL)
+   {
+      vf_pu8_static_key = (uint8_t *) calloc(AES128_KEY_SIZE, sizeof(uint8_t));
+      e_status = GenRndAES128Key(vf_pu8_static_key);
+   }
+   else
+      e_status = CRYPTO_OK;
+
+   return e_status;
+}
+
+crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
+                                             uint16_t const u16_bufferlen,
+                                             uint8_t ** pu8_ciphertext,
+                                             int32_t * const i32_cipherlen)
+{
+   crypto_status e_status = CRYPTO_ERR;
+   uint8_t * pu8_temp_buffer = NULL;
+   int32_t i32_temp_cipherlen = 0;
+
+   e_status = staticAesEcbKeyCheckAndInit();
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
+      return e_status;
+   }
+
+   if (pu8_buffer == NULL || u16_bufferlen == 0)
+   {
+      DEBUG_CRYPTO("Error with input parameters...\n");
+      return CRYPTO_ERR;
+   }
+
+   e_status = EncryptAES128_ECB_OpenSSL(pu8_buffer, u16_bufferlen, vf_pu8_static_key, &pu8_temp_buffer, &i32_temp_cipherlen);
+
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error with AES ECB encryption process...\n");
+      return e_status;
+   }
+
+   *pu8_ciphertext = pu8_temp_buffer;
+   *i32_cipherlen = i32_temp_cipherlen;
+
+   return e_status;
+}
+
+uint8_t * vf_pu8_unknown_str = NULL;
+crypto_status baatOracleUnknownStrInit(uint8_t const * const pu8_unknown_str, uint16_t u16_len)
+{
+   if (pu8_unknown_str == NULL || u16_len == 0)
+   {
+      DEBUG_CRYPTO("Error with input values...\n");
+      return CRYPTO_INVAL;
+   }
+   vf_pu8_unknown_str = (uint8_t *)calloc(u16_len+1, sizeof(uint8_t));
+   memcpy(vf_pu8_unknown_str, pu8_unknown_str, u16_len);
+   vf_pu8_unknown_str[u16_len+1] = '\0';
+
+   return CRYPTO_OK;
+}
+
+crypto_status baatOracle(uint8_t const * const pu8_msg, 
+                           uint16_t const u16_msg_len,
+                           uint8_t ** pu8_enc_out,
+                           int32_t * pi32_enc_out_len)
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   if (vf_pu8_unknown_str == NULL)
+   {
+      DEBUG_CRYPTO("Unknown string not initialized...\n");
+   }
+   else
+   {
+      e_status = staticAesEcbKeyCheckAndInit();
+      if (e_status == CRYPTO_OK)
+      {
+         uint8_t * pu8_concat_msg = NULL;
+         pu8_concat_msg = (uint8_t *) calloc(u16_msg_len + strlen(vf_pu8_unknown_str), sizeof(uint8_t));
+         if (pu8_msg != NULL && u16_msg_len != 0)
+            memcpy(pu8_concat_msg, pu8_msg, u16_msg_len);
+         memcpy(&pu8_concat_msg[u16_msg_len], vf_pu8_unknown_str, strlen(vf_pu8_unknown_str));
+         DEBUG_CRYPTO("The concatenated str is: %s\n", pu8_concat_msg);
+
+         uint8_t * pu8_temp_encryption = NULL;
+         int32_t i32_temp_encryption_len = 0;
+         e_status = encryptBufferAesEcbStaticKey(pu8_concat_msg, u16_msg_len+strlen(vf_pu8_unknown_str), &pu8_temp_encryption, &i32_temp_encryption_len);
+
+         if (pu8_concat_msg)
+            free(pu8_concat_msg);
+         pu8_concat_msg = NULL;
+
+         if (e_status != CRYPTO_OK)
+         {
+            DEBUG_CRYPTO("Error while encrypting concatenated message...\n");
+            *pu8_enc_out = NULL;
+            *pi32_enc_out_len = 0;
+         }
+         else
+         {
+            if (pu8_enc_out != NULL)
+               *pu8_enc_out = pu8_temp_encryption;
+            else
+            {
+               if (pu8_temp_encryption)
+                  free(pu8_temp_encryption);
+               pu8_temp_encryption = NULL;
+            }
+            *pi32_enc_out_len = i32_temp_encryption_len;
+         }
+      }
+   }
+
+   return e_status;
+}
+
+crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize)
+{
+   crypto_status EStatus = CRYPTO_ERR;
+   uint8_t * pu8_msg = NULL;
+   uint8_t * pu8_temp_cipher = NULL;
+   uint8_t * pu8_prev_cipher = NULL;
+   int32_t i32_temp_cipherlen = 0;
+   uint16_t u16_blocksize = 1;
+
+   while (u16_blocksize < 1024)
+   {
+      pu8_msg = (uint8_t *) realloc(pu8_msg, u16_blocksize);
+      memset(pu8_msg, 'A', u16_blocksize);
+      EStatus = baatOracle(pu8_msg, u16_blocksize, &pu8_temp_cipher, &i32_temp_cipherlen);
+      if (EStatus != CRYPTO_OK)
+      {
+         u16_blocksize = 0;
+         break;
+      }
+
+      if (u16_blocksize != 1)
+      {
+         if(0 == memcmp(pu8_temp_cipher, pu8_prev_cipher, 4))
+         {
+            u16_blocksize--;
+            break;
+         }
+      }
+      pu8_prev_cipher = (uint8_t *) realloc(pu8_prev_cipher, i32_temp_cipherlen);
+      memcpy(pu8_prev_cipher, pu8_temp_cipher, i32_temp_cipherlen);
+      if (pu8_temp_cipher)
+         free(pu8_temp_cipher);
+      pu8_temp_cipher = NULL;
+
+      u16_blocksize++;
+   }
+
+   if (pu8_temp_cipher)
+      free(pu8_temp_cipher);
+   pu8_temp_cipher = NULL;
+
+   if (pu8_prev_cipher)
+      free(pu8_prev_cipher);
+   pu8_prev_cipher = NULL;
+
+   *u16_guessed_blocksize = u16_blocksize;
+   return EStatus;
+}
+
+crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len)
+{
+   crypto_status EStatus = CRYPTO_ERR;
+
+   // Initialize unknown string
+   EStatus = baatOracleUnknownStrInit(pu8_unknown_msg, u16_msg_len);
+
+   // Guess key blocksize
+   uint16_t u16_guessed_blocksize = 0;
+   EStatus = guessOracleBlockSize(&u16_guessed_blocksize);
+   if (EStatus != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error guessing the key blocksize!\n");
+      return EStatus;
+   }
+
+   DEBUG_CRYPTO("<INFO> The guessed blocksize is: %d\n", u16_guessed_blocksize);
+
+   // Now We want to know the length of the plaintext. As the Oracle uses PKCS#7 padding, the
+   // padding will add the number of bytes necessaries to complete a block. So, we will encrypt
+   // an empty message (only the unknown message) and store the size. Then, increment the plaintext
+   // one by one and when a size increase is observed, means we filled a block.
+   int32_t i32_plaintext_len = 0;
+   EStatus = baatOracle(NULL, 0, NULL, &i32_plaintext_len);
+
+   uint8_t * pu8_temp = NULL;
+
+   for (uint16_t u16_cont = 1; u16_cont < u16_guessed_blocksize; u16_cont++)
+   {
+      int32_t i32_actual_len = 0;
+      pu8_temp = (uint8_t *) realloc(pu8_temp, u16_cont);
+      memset(pu8_temp, 'S', u16_cont);
+      EStatus = baatOracle(pu8_temp, u16_cont, NULL, &i32_actual_len);
+
+      if (i32_actual_len != i32_plaintext_len)
+      {
+         i32_plaintext_len -= u16_cont;
+         break;
+      }
+   }
+   if (pu8_temp)
+      free(pu8_temp);
+   pu8_temp = NULL;
+
+   DEBUG_CRYPTO("<INFO> Plaintext length calculated --> %d\n", i32_plaintext_len);
+
+   // Detect ECB mode
+   // Minimum 2 equal blocks to get same encryption of 2 blocks.
+   uint8_t *pu8_my_ecb_detection_str = (uint8_t *) calloc(u16_guessed_blocksize*2, sizeof(uint8_t));
+   memset(pu8_my_ecb_detection_str, 'A', u16_guessed_blocksize*2);
+   uint8_t * pu8_ecb_detection_input_cipher = NULL;
+   int32_t i32_ecb_detection_input_cipherlen = 0;
+
+   EStatus = baatOracle(pu8_my_ecb_detection_str, u16_guessed_blocksize*2, &pu8_ecb_detection_input_cipher, &i32_ecb_detection_input_cipherlen);
+   if (pu8_my_ecb_detection_str)
+      free(pu8_my_ecb_detection_str);
+   pu8_my_ecb_detection_str = NULL;
+   if (EStatus != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error with encription for AES mode detection...\n");
+      if (pu8_ecb_detection_input_cipher)
+         free(pu8_ecb_detection_input_cipher);
+      pu8_ecb_detection_input_cipher = NULL;
+      return EStatus;
+   }
+
+   EStatus = Detect_AES_ECB(pu8_ecb_detection_input_cipher, i32_ecb_detection_input_cipherlen, u16_guessed_blocksize);
+   if (pu8_ecb_detection_input_cipher)
+      free(pu8_ecb_detection_input_cipher);
+   pu8_ecb_detection_input_cipher = NULL;
+   if (EStatus != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Not ECB detected, cannot use One-byte-at-a-time option...\n");
+      return EStatus;
+   }
+
+   DEBUG_CRYPTO("<INFO> Detected ECB cipher mode!\n");
+
+   // Now finally, we can proceed to try to break the oracle
+   // i32_idx is the byte we are trying to get from the unkbown string...
+   uint8_t * pu8_discovered_text = NULL;
+   int32_t i32_discovered_len = 0;
+   uint16_t u16_guessing_block = 0;
+   for (int32_t i32_idx = 0; i32_idx <= i32_plaintext_len; i32_idx++)
+   {
+      uint16_t u16_inv_padding_len = i32_idx % u16_guessed_blocksize;
+      uint16_t u16_padding_len = u16_guessed_blocksize-u16_inv_padding_len-1;
+      DEBUG_CRYPTO("Padding length: %d\n", u16_padding_len);
+      uint8_t * pu8_my_str = (uint8_t *) calloc(u16_padding_len, sizeof(uint8_t));
+      memset(pu8_my_str, 'A', u16_padding_len);
+
+      uint8_t * pu8_oracle_output = NULL;
+      int32_t i32_oracle_outlen = 0;
+      EStatus = baatOracle(pu8_my_str, u16_padding_len, &pu8_oracle_output, &i32_oracle_outlen);
+
+      uint8_t * pu8_dictionary = (uint8_t *) calloc(u16_padding_len+i32_discovered_len+1, sizeof(uint8_t));
+      memset(pu8_dictionary, 'A', u16_padding_len);
+      if (i32_discovered_len != 0)
+      {
+         memcpy(&pu8_dictionary[u16_padding_len], pu8_discovered_text, i32_discovered_len);
+      }
+
+      DEBUG_CRYPTO("Dictionary base str is: %s\n", pu8_dictionary);
+
+      if (i32_idx % u16_guessed_blocksize == 0 && i32_idx != 0)
+         u16_guessing_block++;
+
+      uint8_t * pu8_oracle_dictionary_out = NULL;
+      for (uint16_t u16_idx = 0; u16_idx < 256; u16_idx++)
+      {
+         int32_t i32_oracle_dictionary_outlen = 0;
+         pu8_dictionary[u16_padding_len+i32_discovered_len] = u16_idx;
+         DEBUG_CRYPTO("Trying dictionary attempt: %s\n", pu8_dictionary);
+         EStatus = baatOracle(pu8_dictionary, u16_padding_len+i32_discovered_len+1, &pu8_oracle_dictionary_out, &i32_oracle_dictionary_outlen);
+
+         if (0 == memcmp(&pu8_oracle_dictionary_out[u16_guessing_block*u16_guessed_blocksize], &pu8_oracle_output[u16_guessing_block*u16_guessed_blocksize], u16_guessed_blocksize))
+         {
+            DEBUG_CRYPTO("Found character %d (block #%d) of unknown str! --> %c\n", i32_idx, u16_guessing_block, u16_idx);
+            pu8_discovered_text = (uint8_t *) realloc(pu8_discovered_text, (i32_discovered_len+1) * sizeof (uint8_t));
+            pu8_discovered_text[i32_discovered_len] = u16_idx;
+            i32_discovered_len += 1;
+
+            if (pu8_oracle_dictionary_out)
+               free(pu8_oracle_dictionary_out);
+            pu8_oracle_dictionary_out = NULL;
+
+            break;
+         }
+
+         if (pu8_oracle_dictionary_out)
+            free(pu8_oracle_dictionary_out);
+         pu8_oracle_dictionary_out = NULL;
+      }
+
+      if (pu8_dictionary)
+         free(pu8_dictionary);
+      pu8_dictionary = NULL;
+
+      if (pu8_my_str)
+         free(pu8_my_str);
+      pu8_my_str = NULL; 
+
+      if (pu8_oracle_output)
+         free(pu8_oracle_output);
+      pu8_oracle_output = NULL;     
+   }
+
+   printf("The obtained unknown string is:\n%s\nAgainst the real string:\n%s\n", pu8_discovered_text, pu8_unknown_msg);
+   
+   return EStatus;
 }

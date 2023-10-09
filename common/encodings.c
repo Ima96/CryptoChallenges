@@ -103,6 +103,19 @@ uint16_t B64DecodeSize(uint8_t const * const buf, uint16_t len)
    return res_len;
 }
 
+uint16_t B64EncodeSize(uint8_t const * const pu8_buf, uint16_t u16_len)
+{
+   uint16_t u16_ret = u16_len;
+
+   if (u16_len % 3 != 0)
+      u16_ret += 3 - (u16_len % 3);
+   
+   u16_ret /= 3;
+   u16_ret *= 4;
+
+   return u16_ret;
+}
+
 uint8_t *DecodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_size)
 {
    uint16_t res_len = B64DecodeSize(buf, len);
@@ -128,7 +141,38 @@ uint8_t *DecodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_size)
    return decoded;
 }
 
-// uint8_t *EncodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_len)
-// {
+uint8_t *EncodeBase64(uint8_t const * const pu8_buf, uint16_t const u16_len, uint16_t *u16_res_size)
+{
 
-// }
+   if (pu8_buf == NULL || u16_len == 0)
+      return NULL;
+
+   uint16_t u16_res_len = B64EncodeSize(pu8_buf, u16_len);
+   uint8_t * pu8_encoded = (uint8_t *) calloc(u16_res_len + 1, sizeof(uint8_t));
+   pu8_encoded[u16_res_len] = '\0';
+
+   *u16_res_size = u16_res_len;
+
+   int v;
+   for (int i = 0, j = 0; i < u16_len; i += 3, j += 4)
+   {
+      v = pu8_buf[i];
+      v = i + 1 < u16_len ? v << 8 | pu8_buf[i+1] : v << 8;
+      v = i + 2 < u16_len ? v << 8 | pu8_buf[i+2] : v << 8;
+
+      pu8_encoded[j] = Base64Digits[(v >> 18) & 0x3F];
+      pu8_encoded[j+1] = Base64Digits[(v >> 12) & 0x3F];
+
+      if (i+1 < u16_len)
+         pu8_encoded[j+2] = Base64Digits[(v >> 6) & 0x3F];
+      else
+         pu8_encoded[j+2] = '=';
+
+      if (i+2 < u16_len)
+         pu8_encoded[j+3] = Base64Digits[v & 0x3F];
+      else
+         pu8_encoded[j+3] = '=';
+   }
+
+   return pu8_encoded;
+}
