@@ -22,8 +22,10 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
+
+file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources)
 
 add_subdirectory(common ${BUILD_OBJECTS_DIRECTORY}/common)
 

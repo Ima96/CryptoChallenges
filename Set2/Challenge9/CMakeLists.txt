@@ -15,15 +15,13 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
 
-#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
-
-add_executable(pad-pkcs7 ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
+add_executable(ch9_pad-pkcs7 ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 target_link_libraries(
-   pad-pkcs7 
+   ch9_pad-pkcs7
    encodings 
    crypto
    misc

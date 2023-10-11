@@ -15,17 +15,15 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
 
-#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
+add_executable(ch6_break-rkxor ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
-add_executable(break-rkxor ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
-
-target_link_libraries(break-rkxor encodings crypto)
+target_link_libraries(ch6_break-rkxor encodings crypto)
 
 add_custom_command(
-   TARGET break-rkxor POST_BUILD
+   TARGET ch6_break-rkxor POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
    COMMENT "Copying Challenge 6 necessary files to output location..."
 )

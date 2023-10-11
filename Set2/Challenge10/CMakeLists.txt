@@ -15,16 +15,14 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
 
-#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
-
-add_executable(decrypt-cbc ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
+add_executable(ch10_decrypt-cbc ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(
-   decrypt-cbc
+   ch10_decrypt-cbc
    OpenSSL::SSL 
    encodings 
    crypto
@@ -32,7 +30,7 @@ target_link_libraries(
 )
 
 add_custom_command(
-   TARGET decrypt-cbc POST_BUILD
+   TARGET ch10_decrypt-cbc POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext10.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
    COMMENT "Copying Challenge10 necessary files to output location..."
 )

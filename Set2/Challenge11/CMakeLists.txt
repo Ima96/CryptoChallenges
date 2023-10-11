@@ -15,16 +15,14 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
 
-#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
-
-add_executable(oracle11 ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
+add_executable(ch11_oracle ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(
-   oracle11
+   ch11_oracle
    OpenSSL::SSL 
    encodings 
    crypto

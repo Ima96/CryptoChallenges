@@ -15,16 +15,14 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-  add_definitions(-DDEBUG_APP)
+   add_definitions(-DDEBUG_APP)
 endif()
 
-#add_subdirectory(../../common ${CMAKE_CURRENT_BINARY_DIR}/.objs/common)
-
-add_executable(detect_aes-ecb ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
+add_executable(ch8_detect_aes-ecb ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(
-   detect_aes-ecb 
+   ch8_detect_aes-ecb
    OpenSSL::SSL 
    encodings
    crypto
@@ -32,7 +30,7 @@ target_link_libraries(
 )
 
 add_custom_command(
-   TARGET detect_aes-ecb POST_BUILD
+   TARGET ch8_detect_aes-ecb POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext8.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
    COMMENT "Copying Challenge 8 necessary files to output location..."
 )

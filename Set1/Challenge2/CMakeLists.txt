@@ -12,8 +12,6 @@ if (DEBUG_CRYPTO)
 	add_definitions(-DDEBUG_CRYPT)
 endif()
 
-#add_subdirectory(../../common build)
+add_executable(ch2_XOR ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
-add_executable(XOR ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
-
-target_link_libraries(XOR encodings crypto)
+target_link_libraries(ch2_XOR encodings crypto)
