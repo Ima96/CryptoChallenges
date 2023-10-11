@@ -29,11 +29,11 @@
 /* Typedefs */
 typedef enum crypto_status
 {
-    CRYPTO_OK           =  0,
-    CRYPTO_ERR          =  1,
-    CRYPTO_ERR_SSL      =  2,
-    CRYPTO_NO_DETECTED  =  3,
-    CRYPTO_INVAL        =  4
+   CRYPTO_OK           =  0,
+   CRYPTO_ERR          =  1,
+   CRYPTO_ERR_SSL      =  2,
+   CRYPTO_NO_DETECTED  =  3,
+   CRYPTO_INVAL        =  4
 } crypto_status;
 
 typedef enum Ecrypto_aes_mode

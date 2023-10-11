@@ -143,6 +143,9 @@ crypto_status BreakFixedXOR(	uint8_t const * const encripted_buff,
 		if (status != CRYPTO_OK)
 		{
 			printf("Decrypting error!!\n");
+         if (decryption_attempt)
+            free(decryption_attempt);
+         decryption_attempt = NULL;
 			return -1;
 		}
 
@@ -158,13 +161,17 @@ crypto_status BreakFixedXOR(	uint8_t const * const encripted_buff,
 		}
 	}
 
+   if (decryption_attempt)
+      free(decryption_attempt);
+   decryption_attempt = NULL;
+
 	return CRYPTO_OK;
 }
 
 crypto_status BreakFixedASCIIXOR_Key(	uint8_t const * const encripted_buff,
-										   uint16_t const encripted_buff_len,
+                                 uint16_t const encripted_buff_len,
                                  uint8_t * const key
-										   )
+                                 )
 {
 	crypto_status status = CRYPTO_ERR;
 	float score = 0, best_score = 100000;
@@ -199,6 +206,10 @@ crypto_status BreakFixedASCIIXOR_Key(	uint8_t const * const encripted_buff,
          *key = best_key_candidate;
 		}
 	}
+
+   if (decryption_attempt)
+      free(decryption_attempt);
+   decryption_attempt = NULL;
 
 	return CRYPTO_OK;
 }
@@ -254,7 +265,7 @@ void Guess_RKXOR_KeySize(uint8_t const * const bin_ciphertext,
    uint8_t *buf2 = NULL;
    uint16_t hamm_dist = 0;
    float norm_hamm = 0;
-   float best_norms[4] = {1000};
+   float best_norms[4] = {1000, 1000, 1000, 1000};
 
    for (uint8_t KEYSIZE = 2; KEYSIZE <= 40; ++KEYSIZE)
    {
@@ -263,7 +274,7 @@ void Guess_RKXOR_KeySize(uint8_t const * const bin_ciphertext,
       buf1 = realloc(buf1, KEYSIZE * sizeof(uint8_t));
       buf2 = realloc(buf2, KEYSIZE * sizeof(uint8_t));
 
-      for (int i = 0; i < bin_cipherlen; i += 2*KEYSIZE)
+      for (int i = 0; i < (bin_cipherlen - 2*KEYSIZE); i += 2*KEYSIZE)
       {
          memcpy(buf1, &bin_ciphertext[i], KEYSIZE);
          memcpy(buf2, &bin_ciphertext[i+KEYSIZE], KEYSIZE);
@@ -421,7 +432,7 @@ crypto_status EncryptAES128_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
    }
    EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-   pu8_ciphertext_temp = malloc(i32_plainlen_padded * sizeof(uint8_t));
+   pu8_ciphertext_temp = malloc(i32_plainlen_padded+1 * sizeof(uint8_t));
    if (1 != EVP_EncryptUpdate(ctx, pu8_ciphertext_temp, &outlen, pu8_plaintext_padded, i32_plainlen_padded))
    {
       printf("<ERROR> Could not update Encrypt Routine!!\n");
@@ -711,7 +722,7 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
 
       u8_rnd_prepend = (random() % (10 - 5 + 1)) + 5;
       u8_rnd_append = (random() % (10 - 5 + 1)) + 5;
-      pu8_msg_alt = malloc((u8_rnd_prepend + u16_msg_sz + u8_rnd_prepend) * sizeof(uint8_t));
+      pu8_msg_alt = (uint8_t *) malloc((u8_rnd_prepend + u16_msg_sz + u8_rnd_append) * sizeof(uint8_t));
       GeneratePseudoRandomBytes(pu8_msg_alt, u8_rnd_prepend);
       memcpy(pu8_msg_alt+u8_rnd_prepend, pu8_message, u16_msg_sz);
       GeneratePseudoRandomBytes(pu8_msg_alt+u8_rnd_prepend+u16_msg_sz, u8_rnd_append);
@@ -789,6 +800,16 @@ crypto_status staticAesEcbKeyCheckAndInit(void)
    return e_status;
 }
 
+void staticAesEcbKeyRemove(void)
+{
+   if (vf_pu8_static_key)
+   {
+      memset(vf_pu8_static_key, 0, AES128_KEY_SIZE);
+      free(vf_pu8_static_key);
+      vf_pu8_static_key = NULL;
+   }
+}
+
 crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
                                              uint16_t const u16_bufferlen,
                                              uint8_t ** pu8_ciphertext,
@@ -835,9 +856,16 @@ crypto_status baatOracleUnknownStrInit(uint8_t const * const pu8_unknown_str, ui
    }
    vf_pu8_unknown_str = (uint8_t *)calloc(u16_len+1, sizeof(uint8_t));
    memcpy(vf_pu8_unknown_str, pu8_unknown_str, u16_len);
-   vf_pu8_unknown_str[u16_len+1] = '\0';
+   vf_pu8_unknown_str[u16_len] = '\0';
 
    return CRYPTO_OK;
+}
+
+void baatOracleUnknownStrDeinit(void)
+{
+   if (vf_pu8_unknown_str)
+      free(vf_pu8_unknown_str);
+   vf_pu8_unknown_str = NULL;
 }
 
 crypto_status baatOracle(uint8_t const * const pu8_msg, 
@@ -925,12 +953,17 @@ crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize)
       }
       pu8_prev_cipher = (uint8_t *) realloc(pu8_prev_cipher, i32_temp_cipherlen);
       memcpy(pu8_prev_cipher, pu8_temp_cipher, i32_temp_cipherlen);
+
       if (pu8_temp_cipher)
          free(pu8_temp_cipher);
       pu8_temp_cipher = NULL;
 
       u16_blocksize++;
    }
+
+   if (pu8_msg)
+      free(pu8_msg);
+   pu8_msg = NULL;
 
    if (pu8_temp_cipher)
       free(pu8_temp_cipher);
@@ -1091,7 +1124,17 @@ crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_ms
       pu8_oracle_output = NULL;     
    }
 
-   printf("The obtained unknown string is:\n%s\nAgainst the real string:\n%s\n", pu8_discovered_text, pu8_unknown_msg);
+   pu8_discovered_text = (uint8_t *) realloc(pu8_discovered_text, (i32_discovered_len+1) * sizeof (uint8_t));
+   pu8_discovered_text[i32_discovered_len] = '\0';
+
+   printf("The obtained unknown string is:\n%s\nAgainst the real string:\n%s\n", pu8_discovered_text, vf_pu8_unknown_str);
+
+   baatOracleUnknownStrDeinit();
+   staticAesEcbKeyRemove();
+
+   if (pu8_discovered_text)
+      free(pu8_discovered_text);
+   pu8_discovered_text = NULL;
    
    return EStatus;
 }

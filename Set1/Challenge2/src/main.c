@@ -12,39 +12,47 @@
 
 int main(void)
 {
-    crypto_status status = CRYPTO_ERR;
-    uint8_t buff1[] = "1c0111001f010100061a024b53535009181c";
-    uint8_t buff2[] = "686974207468652062756c6c277320657965";
-    int buff1_sz = sizeof(buff1) - 1;
-    int buff2_sz = sizeof(buff2) - 1;
+   crypto_status status = CRYPTO_ERR;
+   uint8_t buff1[] = "1c0111001f010100061a024b53535009181c";
+   uint8_t buff2[] = "686974207468652062756c6c277320657965";
+   int buff1_sz = sizeof(buff1) - 1;
+   int buff2_sz = sizeof(buff2) - 1;
 
-    uint8_t *hex_buff1 = NULL;
-    uint8_t *hex_buff2 = NULL;
-    uint8_t *XORed_bin = NULL;
-    uint8_t *XORed_ascii = NULL;
+   uint8_t *hex_buff1 = NULL;
+   uint8_t *hex_buff2 = NULL;
+   uint8_t *XORed_bin = NULL;
+   uint8_t *XORed_ascii = NULL;
 
-    DEBUG_CRYPTO("Size of buff1: %d\n", buff1_sz);
+   DEBUG_CRYPTO("Size of buff1: %d\n", buff1_sz);
 
-    hex_buff1 = malloc(buff1_sz);
-    hex_buff2 = malloc(buff2_sz);
-    XORed_bin = malloc(buff1_sz);
-    XORed_ascii = malloc(buff1_sz);
+   printf("Buffer1: %s\nBuffer2: %s\n", buff1, buff2);
 
-    printf("Buffer1: %s\nBuffer2: %s\n", buff1, buff2);
+   hex_buff1 = AsciiHex2Bin(buff1, buff1_sz);
+   hex_buff2 = AsciiHex2Bin(buff2, buff2_sz);
 
-    hex_buff1 = AsciiHex2Bin(buff1, buff1_sz);
-    hex_buff2 = AsciiHex2Bin(buff2, buff2_sz);
+   XORed_bin = malloc(buff1_sz);
+   status = FixedXOR(hex_buff1, hex_buff2, buff1_sz, buff2_sz, XORed_bin);
 
-    status = FixedXOR(hex_buff1, hex_buff2, buff1_sz, buff2_sz, XORed_bin);
+   free(hex_buff1);
+   hex_buff1 = NULL;
+   free(hex_buff2);
+   hex_buff2 = NULL;
 
-    if (status != CRYPTO_OK)
-    {
-        printf("Something went wrong in XOR function!\n");
-        exit(EXIT_FAILURE);
-    }
+   if (status != CRYPTO_OK)
+   {
+      printf("Something went wrong in XOR function!\n");
+      free(XORed_bin);
+      XORed_bin = NULL;
+      exit(EXIT_FAILURE);
+   }
 
-    XORed_ascii = BinHex2Ascii(XORed_bin, buff1_sz);
-    printf("\nXORed result: %s\n", XORed_ascii);
+   XORed_ascii = BinHex2Ascii(XORed_bin, buff1_sz);
+   printf("\nXORed result: %s\n", XORed_ascii);
 
-    return 0;
+   free(XORed_bin);
+   XORed_bin = NULL;
+   free(XORed_ascii);
+   XORed_ascii = NULL;
+
+   return 0;
 }

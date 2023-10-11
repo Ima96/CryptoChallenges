@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
 
    printf("Plaintext:\n\"%s\"\n", line);
 
-   uint8_t *ciphertext = calloc(line_len, sizeof(uint8_t));
+   uint8_t *ciphertext = (uint8_t *) calloc(line_len, sizeof(uint8_t));
    EncryptRepeatingKeyXor(line, line_len-1, key, key_len, ciphertext);
    printf("Ciphertext:\n\"%s\"\n", ciphertext);
 

@@ -16,7 +16,7 @@ int main(void)
 	uint8_t *hex_string = NULL, *ascii_string = NULL;
 	uint8_t *base64_string = NULL;
 
-	fin = fopen("The_String.txt", "r");
+	fin = fopen("./resources/The_String.txt", "r");
 
 	if (fin == NULL)
 	{
@@ -30,20 +30,25 @@ int main(void)
 
 	hex_str_size = ascii_str_size;
 
-	ascii_string = malloc(ascii_str_size);
-	hex_string = malloc(hex_str_size);
+	ascii_string = malloc(ascii_str_size+1);
 
 	while(fscanf(fin, "%s", ascii_string) != EOF);
+   fclose(fin);
 
 	printf("The hex(ascii) string: %s\n", ascii_string);
 
 	hex_string = AsciiHex2Bin(ascii_string, ascii_str_size);
 
-	base64_string = malloc(ceil(hex_str_size * 2 / 3));
-
 	base64_string = Hex2Base64(hex_string, hex_str_size);
 
 	printf("The converted base64 string: %s\n", base64_string);
+
+   free(ascii_string);
+   ascii_string = NULL;
+   free(hex_string);
+   hex_string = NULL;
+   free(base64_string);
+   base64_string = NULL;
 
 	return 0;
 }

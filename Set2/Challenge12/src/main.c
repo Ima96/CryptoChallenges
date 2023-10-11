@@ -18,5 +18,9 @@ int main(void)
 
    EStatus = oneByteAtATime_ECB_Decryption(pu8_plaintext, u16_decoded_pt_len);
 
+   if (pu8_plaintext)
+      free(pu8_plaintext);
+   pu8_plaintext = NULL;
+
    return EXIT_SUCCESS;
 }

@@ -32,7 +32,7 @@ void main(int argc, char *argv[])
       #if defined(DEBUG_APP)
       printf("Line %d: %s\n", i, cipherlines[i]);
       #endif
-      if (CRYPTO_OK == (Detect_AES_ECB(cipherlines[i], strlen(cipherlines[i]), AES128_KEY_SIZE)))
+      if (CRYPTO_OK == Detect_AES_ECB(cipherlines[i], strlen(cipherlines[i]), AES128_KEY_SIZE))
          printf("AES-ECB Detected in line #%d: %s\n", i, cipherlines[i]);
    }
 

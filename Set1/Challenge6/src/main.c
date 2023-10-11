@@ -49,6 +49,13 @@ void B64Test(void)
       printf("[DEBUG] Base64 decode not working...\n");
    else
       printf("[DEBUG] Base64 decode working fine!\n");
+
+   free(test_res1);
+   test_res1 = NULL;
+   free(test_res2);
+   test_res2 = NULL;
+   free(test_res3);
+   test_res3 = NULL;
 }
 
 int main(int argc, char * argv[])
@@ -100,6 +107,8 @@ int main(int argc, char * argv[])
    uint16_t bin_cipherlen = 0;
    uint8_t *bin_ciphertext = DecodeBase64(ciphertext, cont, 
                                           &bin_cipherlen);
+   free(ciphertext);
+   ciphertext = NULL;
 
    #if defined(DEBUG_APP)
    printf("[DEBUG] Decoded:\n");
@@ -158,6 +167,9 @@ int main(int argc, char * argv[])
       #endif
 
       English_Score(test_text, (bin_cipherlen/2), &final_plain_score);
+      if (test_text)
+         free(test_text);
+      test_text = NULL;
 
       if (final_plain_score < best_final_score)
       {
@@ -182,6 +194,17 @@ int main(int argc, char * argv[])
    EncryptRepeatingKeyXor(bin_ciphertext, bin_cipherlen, best_decryption_key, best_decryption_key_sz, plaintext);
 
    printf("Deciphered text:\n%.*s\n", bin_cipherlen, plaintext);
+
+   if (bin_ciphertext)
+      free(bin_ciphertext);
+   bin_ciphertext = NULL;
+
+   if (best_decryption_key)
+      free(best_decryption_key);
+   best_decryption_key = NULL;
+
+   free(plaintext);
+   plaintext = NULL;
 
    return 0;
 }

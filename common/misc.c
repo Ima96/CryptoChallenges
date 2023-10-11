@@ -39,7 +39,7 @@ uint16_t readFile(FILE *fip, uint8_t **outbuf, uint8_t const filter)
    uint16_t count = 0;
    uint16_t f_size = getFileSize(fip, filter);
    
-   temp = malloc(f_size * sizeof(uint8_t));
+   temp = (uint8_t *) malloc((f_size + 1) * sizeof(uint8_t));
 
    while ((c = getc(fip)) != EOF)
    {
@@ -57,6 +57,7 @@ uint16_t readFile(FILE *fip, uint8_t **outbuf, uint8_t const filter)
          count++;
       }
    }
+   temp[count] = '\0';
 
    *outbuf = temp;
    return (f_size == count) ? f_size : 0;
@@ -85,19 +86,20 @@ uint8_t **readFileLines(FILE *fip, uint16_t *line_count)
    uint8_t **temp_buf = NULL;
    uint16_t ln_num = getFileLineCount(fip);
 
-   temp_buf = malloc(ln_num * sizeof(uint8_t *));
+   temp_buf = (uint8_t **) calloc(ln_num, sizeof(uint8_t *));
 
    for (int i = 0; i < ln_num; ++i)
    {
       uint16_t count = 0;
+      temp_buf[i] = NULL;
       while ((c = getc(fip)) != '\n')
       {
-         temp_buf[i] = realloc(temp_buf[i], count + 1);
+         temp_buf[i] = (uint8_t *) realloc(temp_buf[i], (count + 1) * sizeof(uint8_t));
          temp_buf[i][count] = c;
          count++;
       }
-      temp_buf[i] = realloc(temp_buf[i], count+1);
-      temp_buf[count+1] = '\0';
+      temp_buf[i] = (uint8_t *) realloc(temp_buf[i], (count + 1) * sizeof(uint8_t));
+      temp_buf[i][count] = '\0';
    }
 
    *line_count = ln_num;

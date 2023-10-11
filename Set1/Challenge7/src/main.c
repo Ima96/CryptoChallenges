@@ -30,7 +30,7 @@ void main(int argc, char *argv[])
    fseek(fip, 0, SEEK_END);
    uint16_t cipherlen = ftell(fip);
    rewind(fip);
-   uint8_t *ciphertext = calloc(cipherlen, sizeof(uint8_t));
+   uint8_t *ciphertext = calloc(cipherlen+1, sizeof(uint8_t));
 
    char c = 0;
    uint16_t cont = 0;
@@ -39,6 +39,8 @@ void main(int argc, char *argv[])
       if (c != '\n')
          ciphertext[cont++] = c;
    }
+   ciphertext[cont] = '\n';
+   fclose(fip);
 
    printf("Ciphertext:\n\"%s\"\n", ciphertext);
 
@@ -88,6 +90,19 @@ void main(int argc, char *argv[])
 cleanup:
    if (ciphertext)
       free(ciphertext);
+   ciphertext = NULL;
+
+   if (bin_ciphertext)
+      free(bin_ciphertext);
+   bin_ciphertext = NULL;
+
+   if (a_u8_plaintext)
+      free(a_u8_plaintext);
+   a_u8_plaintext = NULL;
+
+   if (pu8_reciphertxt)
+      free(pu8_reciphertxt);
+   pu8_reciphertxt = NULL;
 
    Cleanup_OpenSSL();
 }

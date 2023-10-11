@@ -18,8 +18,7 @@
 int main(void)
 {
    FILE *fip = NULL;
-   char filename[125] = "encripted.txt";
-   //char filename[125] = "ln170.txt";
+   char filename[125] = "./resources/encripted.txt";
 
    if((fip = fopen(filename, "rb")) == NULL)
    {
@@ -53,6 +52,9 @@ int main(void)
          decripted_buff = calloc(line_len-1, sizeof(uint8_t));
          status = BreakFixedXOR(hex_line, line_len-1, decripted_buff, 
                                     &decripted_buff_len, &line_score);
+         
+         free(hex_line);
+         hex_line = NULL;
 
          if (status != CRYPTO_OK)
             printf("Error with the cryptoshit!\n");
@@ -62,15 +64,16 @@ int main(void)
             best_line_score = line_score;
             if (message)
                free(message);
-            message = calloc(decripted_buff_len, sizeof(uint8_t));
+            message = calloc(decripted_buff_len+1, sizeof(uint8_t));
             memcpy(message, decripted_buff, decripted_buff_len);
+            message[decripted_buff_len] = '\0';
             #if defined(DEBUG_APP)
             printf("[UPDATE] = %s --> Score: %f\n", message, best_line_score);
             #endif
          }
             
          line_len = 0;
-       }
+      }
 
    } while(c != EOF);
 
