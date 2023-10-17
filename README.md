@@ -20,7 +20,7 @@
 - [x] Challenge 10: Implement CBC mode
 - [x] Challenge 11: An ECB/CBC detection oracle
 - [x] Challenge 12: Byte-at-a-time ECB decryption (Simple)
-- [ ] Challenge 13: ECB cut-and-paste
+- [x] Challenge 13: ECB cut-and-paste
 - [ ] Challenge 14: Byte-at-a-time ECB decryption (Harder)
 - [ ] Challenge 15: PKCS#7 padding validation
 - [ ] Challenge 16: CBC bitflipping attacks

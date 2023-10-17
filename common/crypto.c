@@ -372,7 +372,7 @@ crypto_status DecryptAES128_ECB_OpenSSL(uint8_t const * const ciphertext,
       return CRYPTO_ERR_SSL;
    }
 
-   EVP_CIPHER_CTX_set_padding(ctx, 0);
+   //EVP_CIPHER_CTX_set_padding(ctx, 0);
 
    plaintext_temp = malloc((cipherlen + 1) * sizeof(uint8_t));
    if (1 != EVP_DecryptUpdate(ctx, plaintext_temp, &outlen, ciphertext, (int)cipherlen))
@@ -497,18 +497,11 @@ crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_si
    if (pu8_buf == NULL || pu32_padded_size == NULL)
       return CRYPTO_ERR;
 
-   if (0 == (u32_buf_size % u16_block_size))
-   {
-      pu8_temp_buf = realloc(pu8_temp_buf, u32_buf_size * sizeof(uint8_t));
-      memcpy(pu8_temp_buf, pu8_buf, u32_buf_size);
-      *pu8_outbuf = pu8_temp_buf;
-      *pu32_padded_size = u32_buf_size;
-      return CRYPTO_OK;
-   }
-
    uint8_t u16_num_pads = 0;
    if (u32_buf_size < u16_block_size)
       u16_num_pads = u16_block_size - u32_buf_size;
+   else if (0 == (u32_buf_size % u16_block_size))
+      u16_num_pads = u16_block_size;
    else
       u16_num_pads =  u16_block_size - (u32_buf_size % u16_block_size);
    
@@ -842,6 +835,42 @@ crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
 
    *pu8_ciphertext = pu8_temp_buffer;
    *i32_cipherlen = i32_temp_cipherlen;
+
+   return e_status;
+}
+
+crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
+                                             uint16_t const u16_cipherlen,
+                                             uint8_t ** ppu8_plaintext,
+                                             int32_t * const pi32_plainlen)
+{
+   crypto_status e_status = CRYPTO_ERR;
+   uint8_t * pu8_temp_buffer = NULL;
+   int32_t i32_temp_plainlen = 0;
+
+   e_status = staticAesEcbKeyCheckAndInit();
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
+      return e_status;
+   }
+
+   if (pu8_ciphertext == NULL || u16_cipherlen == 0)
+   {
+      DEBUG_CRYPTO("Error with input parameters...\n");
+      return CRYPTO_ERR;
+   }
+
+   e_status = DecryptAES128_ECB_OpenSSL(pu8_ciphertext, u16_cipherlen, vf_pu8_static_key, &pu8_temp_buffer, &i32_temp_plainlen);
+
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error with AES ECB encryption process...\n");
+      return e_status;
+   }
+
+   *ppu8_plaintext = pu8_temp_buffer;
+   *pi32_plainlen = i32_temp_plainlen;
 
    return e_status;
 }

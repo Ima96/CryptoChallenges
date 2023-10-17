@@ -165,10 +165,19 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
                                     uint16_t const u16_msg_sz,
                                     crypto_aes_mode_t * const e_detected_mode);
 
+crypto_status staticAesEcbKeyCheckAndInit(void);
+
+void staticAesEcbKeyRemove(void);
+
 crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
                                              uint16_t const u16_bufferlen,
                                              uint8_t ** pu8_ciphertext,
                                              int32_t * const i32_cipherlen);
+
+crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
+                                             uint16_t const u16_cipherlen,
+                                             uint8_t ** ppu8_plaintext,
+                                             int32_t * const pi32_plainlen);
 
 crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize);
 

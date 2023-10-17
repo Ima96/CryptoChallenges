@@ -58,4 +58,6 @@ uint8_t *DecodeBase64(uint8_t *buf, uint16_t len, uint16_t *res_size);
 
 uint8_t *EncodeBase64(uint8_t const * const pu8_buf, uint16_t const u16_len, uint16_t *u16_res_size);
 
+uint8_t *ParseCookieAsJson(uint8_t const * const pu8_ck_buf);
+
 #endif

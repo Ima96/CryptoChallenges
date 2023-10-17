@@ -3,6 +3,7 @@
  * Description: Source file containing the necessary definitions	 *
  * 				for some common encoding variables and operations.	 *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+#include <string.h>
 
 #include "encodings.h"
 
@@ -184,4 +185,53 @@ uint8_t *EncodeBase64(uint8_t const * const pu8_buf, uint16_t const u16_len, uin
    }
 
    return pu8_encoded;
+}
+
+uint8_t *ParseCookieAsJson(uint8_t const * const pu8_ck_buf)
+{
+   if (0 == strlen(pu8_ck_buf))
+      return NULL;
+
+   uint8_t * pu8_temp_buf = (uint8_t *) calloc(strlen(pu8_ck_buf), sizeof(uint8_t));
+   memcpy(pu8_temp_buf, pu8_ck_buf, strlen(pu8_ck_buf));
+   
+   uint16_t u16_parsed_idx = 0;
+   uint8_t * pu8_parsed = (uint8_t *) malloc(4 * sizeof(uint8_t));
+   memcpy(pu8_parsed, "{\n\t", 3);
+   u16_parsed_idx += 3;
+
+   char delimiters[2] = {'=', '&'};
+   char * token = strtok(pu8_temp_buf, delimiters);
+
+   uint8_t u8_cont = 0;
+   while (token != NULL)
+   {
+      pu8_parsed = realloc(pu8_parsed, u16_parsed_idx + strlen(token));
+      memcpy(pu8_parsed + u16_parsed_idx, token, strlen(token));
+      u16_parsed_idx += strlen(token);
+      if ((u8_cont % 2) == 0)
+      {
+         pu8_parsed = realloc(pu8_parsed, u16_parsed_idx + 2);
+         memcpy(pu8_parsed+u16_parsed_idx, ": ", 2);
+         u16_parsed_idx += 2;
+      }
+      else
+      {
+         pu8_parsed = realloc(pu8_parsed, u16_parsed_idx + 3);
+         memcpy(pu8_parsed+u16_parsed_idx, ",\n\t", 3);
+         u16_parsed_idx += 3;
+      }
+      token = strtok(NULL, delimiters);
+      u8_cont++;
+   }
+
+   pu8_parsed[u16_parsed_idx-3] = '\n';
+   pu8_parsed[u16_parsed_idx-2] = '}';
+   pu8_parsed[u16_parsed_idx-1] = '\0';
+
+   if (pu8_temp_buf)
+      free(pu8_temp_buf);
+   pu8_temp_buf = NULL;
+
+   return pu8_parsed;
 }
