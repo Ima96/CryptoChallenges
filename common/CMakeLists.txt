@@ -42,19 +42,3 @@ target_include_directories(cryptopals PUBLIC
 
 target_include_directories(misc PUBLIC
 	${CMAKE_CURRENT_LIST_DIR})
-
-include(GNUInstallDirs)
-install(TARGETS encodings
-         PUBLIC_HEADER
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/encodings
-      )
-install(TARGETS cryptopals
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         PUBLIC_HEADER
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/crypto
-      )
-install(TARGETS misc
-         PUBLIC_HEADER
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/misc
-)
