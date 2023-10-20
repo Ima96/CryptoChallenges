@@ -8,8 +8,8 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include <encodings/encodings.h>
-#include <crypto/crypto.h>
+#include "encodings.h"
+#include "crypto.h"
 
 void main(int argc, char *argv[])
 {

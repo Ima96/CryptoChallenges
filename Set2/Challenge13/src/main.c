@@ -2,7 +2,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include <crypto/crypto.h>
+#include "crypto.h"
 
 #include "BasicUserProfile.h"
 

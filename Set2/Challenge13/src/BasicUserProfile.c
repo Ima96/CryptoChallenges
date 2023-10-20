@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #include "BasicUserProfile.h"
-#include <crypto/crypto.h>
+#include "crypto.h"
 
 static int32_t OBasicUserProfile_check_input_data(uint8_t const * const pu8_in_mail);
 

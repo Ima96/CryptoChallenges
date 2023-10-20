@@ -2,9 +2,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <crypto/crypto.h>
-#include <misc/misc.h>
-#include <encodings/encodings.h>
+#include "crypto.h"
+#include "misc.h"
+#include "encodings.h"
 
 int main(void)
 {

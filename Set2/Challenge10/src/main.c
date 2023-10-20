@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <misc/misc.h>
-#include <crypto/crypto.h>
-#include <encodings/encodings.h>
+
+#include "misc.h"
+#include "crypto.h"
+#include "encodings.h"
 
 int main(int argc, char * argv[])
 {
