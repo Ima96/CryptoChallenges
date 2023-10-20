@@ -20,10 +20,17 @@ if (DEBUG_CRYPTO)
 	add_definitions(-DDEBUG_CRYPT)
 endif()
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+   message(STATUS "Setting CMAKE_BUILD_TYPE to default Debug")
+   set(CMAKE_BUILD_TYPE "Debug" CACHE INTERNAL "Default build type")
+endif()
+
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
    add_definitions(-DDEBUG_APP)
 endif()
+
+message(STATUS "Building for: ${CMAKE_BUILD_TYPE}")
 
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources)
 
