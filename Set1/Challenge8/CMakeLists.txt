@@ -25,7 +25,7 @@ target_link_libraries(
    ch8_detect_aes-ecb
    OpenSSL::SSL 
    encodings
-   crypto
+   cryptopals
    misc
 )
 

@@ -20,7 +20,7 @@ endif()
 
 add_executable(ch4_detect ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
-target_link_libraries(ch4_detect encodings crypto)
+target_link_libraries(ch4_detect encodings cryptopals)
 
 add_custom_command(
    TARGET ch4_detect POST_BUILD

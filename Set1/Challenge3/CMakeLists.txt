@@ -15,4 +15,4 @@ endif()
 
 add_executable(ch3_decipher ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
-target_link_libraries(ch3_decipher encodings crypto)
+target_link_libraries(ch3_decipher encodings cryptopals)

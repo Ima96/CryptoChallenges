@@ -25,6 +25,6 @@ target_link_libraries(
    ch12_baat_ecb_break
    OpenSSL::SSL 
    encodings 
-   crypto
+   cryptopals
    misc
 )

@@ -2,7 +2,7 @@ add_library(encodings SHARED
 	encodings.h
 	encodings.c)
 
-add_library(crypto SHARED
+add_library(cryptopals SHARED
 	crypto.h
 	crypto.c)
 
@@ -12,7 +12,7 @@ add_library(misc SHARED
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(
-	crypto
+	cryptopals
 	OpenSSL::SSL
 )
 
@@ -23,7 +23,7 @@ set_target_properties(
 )
 
 set_target_properties(
-   crypto
+   cryptopals
    PROPERTIES
    PUBLIC_HEADER crypto.h
 )
@@ -37,7 +37,7 @@ set_target_properties(
 target_include_directories(encodings PUBLIC 
 	${CMAKE_CURRENT_LIST_DIR})
 
-target_include_directories(crypto PUBLIC
+target_include_directories(cryptopals PUBLIC
 	${CMAKE_CURRENT_LIST_DIR})
 
 target_include_directories(misc PUBLIC
@@ -48,7 +48,9 @@ install(TARGETS encodings
          PUBLIC_HEADER
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/encodings
       )
-install(TARGETS crypto
+install(TARGETS cryptopals
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
          PUBLIC_HEADER
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/crypto
       )

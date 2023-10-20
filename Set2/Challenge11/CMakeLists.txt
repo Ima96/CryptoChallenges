@@ -25,6 +25,6 @@ target_link_libraries(
    ch11_oracle
    OpenSSL::SSL 
    encodings 
-   crypto
+   cryptopals
    misc
 )

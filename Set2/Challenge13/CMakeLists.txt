@@ -30,5 +30,5 @@ find_package(OpenSSL REQUIRED)
 target_link_libraries(
    ${TARGET}
    OpenSSL::SSL 
-   crypto
+   cryptopals
 )

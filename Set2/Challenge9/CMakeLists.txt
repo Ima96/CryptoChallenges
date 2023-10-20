@@ -23,6 +23,6 @@ add_executable(ch9_pad-pkcs7 ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 target_link_libraries(
    ch9_pad-pkcs7
    encodings 
-   crypto
+   cryptopals
    misc
 )

@@ -20,7 +20,7 @@ endif()
 
 add_executable(ch6_break-rkxor ${CMAKE_CURRENT_LIST_DIR}/src/main.c)
 
-target_link_libraries(ch6_break-rkxor encodings crypto)
+target_link_libraries(ch6_break-rkxor encodings cryptopals)
 
 add_custom_command(
    TARGET ch6_break-rkxor POST_BUILD

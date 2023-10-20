@@ -25,7 +25,7 @@ target_link_libraries(
    ch10_decrypt-cbc
    OpenSSL::SSL 
    encodings 
-   crypto
+   cryptopals
    misc
 )
 

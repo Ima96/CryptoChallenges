@@ -25,7 +25,7 @@ target_link_libraries(
    ch7_decrypt_aes-ecb 
    OpenSSL::SSL 
    encodings
-   crypto
+   cryptopals
 )
 
 add_custom_command(
