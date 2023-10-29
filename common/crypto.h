@@ -181,6 +181,12 @@ crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
 
 crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize);
 
-crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len);
+crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len,
+                                             uint8_t const * const pu8_rand_prepend, 
+                                             uint8_t u8_rand_prepend_len,
+                                             uint8_t ** ppu8_obtained_unknown_msg);
+
+crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len,
+                                                   uint8_t ** ppu8_obtained_unknown_msg);
 
 #endif

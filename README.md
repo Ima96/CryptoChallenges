@@ -2,7 +2,8 @@
 ## General Information
 - *Author*	: Imanol Etxezarreta
 - *Purpose*	: Learn about cryptographics trying to solve different problems derived from weaknesses in real world and modern cryptographic constructions. Trying to do it implementing it in C.
-- 
+- [State of completion](#the-cryptopals-crypto-challenges)
+- [Usage instructions](#usage-instructions)
 
 ## The CryptoPals Crypto Challenges
 ### Set 1: Basics
@@ -21,7 +22,7 @@
 - [x] Challenge 11: An ECB/CBC detection oracle
 - [x] Challenge 12: Byte-at-a-time ECB decryption (Simple)
 - [x] Challenge 13: ECB cut-and-paste
-- [ ] Challenge 14: Byte-at-a-time ECB decryption (Harder)
+- [x] Challenge 14: Byte-at-a-time ECB decryption (Harder)
 - [ ] Challenge 15: PKCS#7 padding validation
 - [ ] Challenge 16: CBC bitflipping attacks
 
@@ -34,4 +35,21 @@
 - [ ] Challenge 22: Crack an MT19937 seed
 - [ ] Challenge 23: Clone an MT19937 RNG from its outputs
 - [ ] Challenge 24: Create the MT 19937 stream cipher and break it
+
+## Make instructions
+*Currently only for linux systems*
+### Dependencies
+- cmake (>= 3.8)
+- openssl1.1.1
+- make
+
+### Usage instructions
+With the following commands, a new folder will be generated inside `build/` folder named `bin/` with all the challenge binaries. Every challenge has a prefix with the form "ch##" where ## is the challenge number. Adittionally, some challenges use some files that are in their respective developing folders, and post-build commands copy those files to `build/bin/resources/` folder.
+```bash
+git clone https://github.com/Ima96/CryptoChallenges.git
+cd CryptoChallenges
+mkdir build && cd build
+cmake ..
+make
+```
 
