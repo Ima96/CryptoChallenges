@@ -30,11 +30,12 @@ int main(void)
    printf("\n");
 
    float score = 0, best_score = 10000;
-   uint8_t best_key_candidate = 0, best_decryption_attempt[string_sz+1];
+   uint8_t best_key_candidate = 0;
+   uint8_t * decryption_attempt = (uint8_t *) calloc(string_sz, sizeof(uint8_t));
+   uint8_t * best_decryption_attempt = (uint8_t *) calloc(string_sz + 1, sizeof(uint8_t));
    for (uint8_t i = 32; i < 127; i++)
    {
       uint8_t current_key_attempt;
-      uint8_t decryption_attempt[string_sz];
       int decrypt_size = 0;
 
       current_key_attempt = i;
@@ -65,6 +66,14 @@ int main(void)
 
    free(hex_string);
    hex_string = NULL;
+
+   if (decryption_attempt)
+      free(decryption_attempt);
+   decryption_attempt = NULL;
+
+   if (best_decryption_attempt)
+      free(best_decryption_attempt);
+   best_decryption_attempt = NULL;
 
    return 0;
 }

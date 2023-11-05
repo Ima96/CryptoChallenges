@@ -50,7 +50,6 @@ void main(int argc, char *argv[])
                                           &bin_cipherlen);
 
    /* OpenSSL */
-   int outlen;
    int plaintext_len;
    uint8_t key[16] = {'Y', 'E', 'L', 'L', 'O', 'W', ' ',  'S', 'U', 'B', 'M', 'A', 'R', 'I', 'N', 'E'};
 
@@ -72,10 +71,10 @@ void main(int argc, char *argv[])
       goto cleanup;
    }
 
-   if (bin_cipherlen == i32_recipherlen)
+   if (bin_cipherlen == i32_recipherlen) 
       printf("Same cipher length achieved!!\n");
    else
-      printf("NOT the same cipher lengths achieved...\n");
+      printf("NOT the same cipher lengths achieved...\nOriginal: %d vs Re-cipher: %d\n", bin_cipherlen, i32_recipherlen);
 
    if (0 == memcmp(bin_ciphertext, pu8_reciphertxt, bin_cipherlen))
       printf("Same cipher text obtained!!\n");

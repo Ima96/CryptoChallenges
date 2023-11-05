@@ -59,7 +59,7 @@ int main(int argc, char * argv[])
    e_status = EncryptAES128_CBC_OpenSSL(pu8_plaintext, u16_plainlen, a16_u8_key, a16_u8_iv, &pu8_reciphertext, &u16_recipherlen);
 
    if (u16_cipherlen != u16_recipherlen)
-      printf("Cipher lengths do not coincide...\n");
+      printf("Cipher lengths do not coincide...\nOriginal: %d vs Re-cipher: %d\n", u16_cipherlen, u16_recipherlen);
    else
       printf("Same cipher lengths achieved!!\n");
 
