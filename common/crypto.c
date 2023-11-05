@@ -10,6 +10,22 @@
 #include <openssl/err.h>
 #include "crypto.h"
 
+/* Original frequencies from God's know where... */
+/* static float english_freq[26] = {
+    0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,  // A-G
+    0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749,  // H-N
+    0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758,  // O-U
+    0.00978, 0.02360, 0.00150, 0.01974, 0.00074                     // V-Z
+}; */
+
+/* Frequencies from 'Alice in wonderland' */
+static float english_freq[27] = {
+    0.0651, 0.0109, 0.0178, 0.0365, 0.1005, 0.0148, 0.0187,  // A-G
+    0.0546, 0.0557, 0.0011, 0.0086, 0.0349, 0.0156, 0.0520,  // H-N
+    0.0603, 0.0113, 0.0015, 0.0403, 0.0481, 0.0792, 0.0257,  // O-U
+    0.0063, 0.0198, 0.0011, 0.0168, 0.0006, 0.2022           // V-Z-SPACE
+};
+
 crypto_status FixedXOR(uint8_t *Buffer1, uint8_t *Buffer2, int Buff1_sz, int Buff2_sz, uint8_t *res)
 {
 	crypto_status status = CRYPTO_ERR;
@@ -62,12 +78,10 @@ crypto_status FixedXOR_SingleCharASCII(uint8_t const * const Buffer,
                                        )
 {
 	crypto_status status = CRYPTO_ERR;
-	uint8_t temp;
 
 	DEBUG_CRYPTO("Buff_sz: %d\n", Buff_sz);
 	DEBUG_CRYPTO("Single Character key: %c\n", Single_Ch_Key);
 
-	int cont = 0;
 	for (int i = 0; i < Buff_sz; i++)
 		res[i] = Buffer[i] ^ Single_Ch_Key;
 	
@@ -102,7 +116,7 @@ crypto_status English_Score(uint8_t *phrase, int phrase_sz, float *score)
 		}
 	}
 
-	float chi2 = 0, expected_count = 0, expected_ignored_count = 0, difference = 0;
+	float chi2 = 0, expected_count = 0, difference = 0;
 	int effective_length = phrase_sz - ignored;
 	for (int i = 0; i < 27; i++)
 	{
@@ -126,7 +140,8 @@ crypto_status BreakFixedXOR(	uint8_t const * const encripted_buff,
 {
 	crypto_status status = CRYPTO_ERR;
 	float score = 0, best_score = 100000;
-	uint8_t best_key_candidate = 0, *decryption_attempt = NULL;
+	//uint8_t best_key_candidate = 0;
+   uint8_t *decryption_attempt = NULL;
 
 	decryption_attempt = (uint8_t *) malloc(encripted_buff_len * sizeof(uint8_t));
 	if (!decryption_attempt)
@@ -155,7 +170,7 @@ crypto_status BreakFixedXOR(	uint8_t const * const encripted_buff,
 		{
 			best_score = score;
 			*final_score = score;
-			best_key_candidate = current_key_attempt;
+			//best_key_candidate = current_key_attempt;
 			*decripted_buff_len = decrypt_size;
 			memcpy(decripted_buff, decryption_attempt, decrypt_size);
 		}
@@ -372,7 +387,7 @@ crypto_status DecryptAES128_ECB_OpenSSL(uint8_t const * const ciphertext,
       return CRYPTO_ERR_SSL;
    }
 
-   //EVP_CIPHER_CTX_set_padding(ctx, 0);
+   EVP_CIPHER_CTX_set_padding(ctx, 0);
 
    plaintext_temp = malloc((cipherlen + 1) * sizeof(uint8_t));
    if (1 != EVP_DecryptUpdate(ctx, plaintext_temp, &outlen, ciphertext, (int)cipherlen))
@@ -412,11 +427,20 @@ crypto_status EncryptAES128_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
    int32_t i32_plainlen_padded = 0;
    int outlen;
 
-   if (CRYPTO_OK != PKCS7_pad(pu8_plaintext, u16_plainlen, AES128_KEY_SIZE, &pu8_plaintext_padded, 
-         &i32_plainlen_padded))
+   if (CRYPTO_OK != PCKS7_pad_validation(pu8_plaintext, u16_plainlen, AES128_KEY_SIZE, NULL))
    {
-      printf("<ERROR> Could not pad plaintext properly...\n");
-      return CRYPTO_ERR_SSL;
+      if (CRYPTO_OK != PKCS7_pad(pu8_plaintext, u16_plainlen, AES128_KEY_SIZE, &pu8_plaintext_padded, 
+         &i32_plainlen_padded))
+      {
+         printf("<ERROR> Could not pad plaintext properly...\n");
+         return CRYPTO_ERR_SSL;
+      }
+   }
+   else
+   {
+      i32_plainlen_padded = u16_plainlen;
+      pu8_plaintext_padded = (uint8_t *) calloc(u16_plainlen, sizeof(uint8_t));
+      memcpy(pu8_plaintext_padded, pu8_plaintext, u16_plainlen);
    }
 
    if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -518,6 +542,76 @@ crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_si
    return CRYPTO_OK;
 }
 
+crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const u32_buf_sz, 
+                                    uint16_t const u16_block_size, uint16_t * const u16_pad_size)
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   if (pu8_buf == NULL || u16_block_size == 0 || u32_buf_sz == 0)
+   {
+      e_status = CRYPTO_INVAL;
+   }
+   else if (u32_buf_sz % u16_block_size != 0)
+   {
+      e_status = CRYPTO_PKCS7_ERR;
+   }
+   else
+   {
+      uint8_t u8_num_pads = pu8_buf[u32_buf_sz-1];
+      if (u8_num_pads > u16_block_size)
+      {
+         e_status = CRYPTO_PKCS7_ERR;
+      }
+      else
+      {
+         uint8_t u8_idx = 0;
+         for (; u8_idx < u8_num_pads; u8_idx++)
+         {
+            if (pu8_buf[u32_buf_sz-1-u8_idx] != u8_num_pads)
+            {
+               e_status = CRYPTO_PKCS7_ERR;
+               break;
+            }
+         }
+         if (u8_idx == u8_num_pads)
+         {
+            if (u16_pad_size)
+               *u16_pad_size = u8_num_pads;
+            e_status = CRYPTO_OK;
+         }
+      }
+   }
+
+   return e_status;
+}
+
+crypto_status PKCS7_pad_strip(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
+                              uint8_t ** ppu8_outbuf, uint32_t * const pu32_stripped_size)
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   if (pu8_buf == NULL || u16_block_size == 0 || ppu8_outbuf == NULL || pu32_stripped_size == NULL)
+   {
+      e_status = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint16_t u16_pad_size = 0;
+      e_status = PCKS7_pad_validation(pu8_buf, u32_buf_size, u16_block_size, &u16_pad_size);
+      if (e_status == CRYPTO_OK)
+      {
+         uint8_t * pu8_stripped_buf = (uint8_t *) calloc(u32_buf_size - u16_pad_size + 1, sizeof(uint8_t));
+         memcpy(pu8_stripped_buf, pu8_buf, u32_buf_size-u16_pad_size);
+         *pu32_stripped_size = u32_buf_size - u16_pad_size;
+         pu8_stripped_buf[*pu32_stripped_size] = '\0';
+         *ppu8_outbuf = pu8_stripped_buf;
+      }
+      
+   }
+
+   return e_status;
+}
+
 crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
                                        uint16_t const u16_cipherlen,
                                        uint8_t const * const pu8_key,
@@ -592,22 +686,23 @@ crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
 
    memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
 
-   if (0 != (u16_plainlen % AES128_KEY_SIZE))
+   if (CRYPTO_OK != PCKS7_pad_validation(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, NULL))
    {
-      //printf("[INFO] Adding pad to plaintext...\n");
+      // Not padded, padding...
       e_status = PKCS7_pad(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, &pu8_plaintxt_pad, &u32_plainlen_pad);
       if (e_status != CRYPTO_OK)
          return e_status;
    }
    else
    {
+      // Valid pad already, no need to pad...
+      u32_plainlen_pad = u16_plainlen;
       pu8_plaintxt_pad = (uint8_t *) calloc(u16_plainlen, sizeof(uint8_t));
       memcpy(pu8_plaintxt_pad, pu8_plaintxt, u16_plainlen);
-      u32_plainlen_pad = u16_plainlen;
    }
 
    uint16_t u16_num_iter = u32_plainlen_pad / AES128_KEY_SIZE;
-   uint8_t * pu8_temp_result = calloc(u32_plainlen_pad, sizeof(uint8_t));
+   uint8_t * pu8_temp_result = (uint8_t *) calloc(u32_plainlen_pad, sizeof(uint8_t));
    uint8_t * pu8_block_cipher_feed = (uint8_t *) calloc(AES128_KEY_SIZE, sizeof(uint8_t));
    uint8_t * pu8_block_cipher_res = NULL;
    uint16_t u16_cipherlen_res = 0;
@@ -632,7 +727,7 @@ crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
       
       memcpy(&pu8_temp_result[i*AES128_KEY_SIZE], pu8_block_cipher_res, AES128_KEY_SIZE);
       memcpy(a16_u8_iv, pu8_block_cipher_res, AES128_KEY_SIZE);
-      u16_cipherlen_res += i32_cipher_res_len;
+      u16_cipherlen_res += AES128_KEY_SIZE;
 
       free(pu8_block_cipher_res);
       pu8_block_cipher_res = NULL;
@@ -1261,7 +1356,7 @@ crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unk
       u8_temp_str_len++;
    }
 
-   e_status = oneByteAtATime_ECB_Decryption(pu8_unknown_msg, u16_msg_len, pu8_rnd_prepend, u8_rnd_prepend_len, ppu8_obtained_unknown_msg);
+   e_status = oneByteAtATime_ECB_Decryption(pu8_unknown_msg, u16_msg_len, pu8_rnd_prepend, u8_guessed_rnd_len, ppu8_obtained_unknown_msg);
    
    /* Clean-up */
    baatOracleUnknownStrDeinit();

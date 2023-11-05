@@ -29,11 +29,12 @@
 /* Typedefs */
 typedef enum crypto_status
 {
-   CRYPTO_OK           =  0,
-   CRYPTO_ERR          =  1,
-   CRYPTO_ERR_SSL      =  2,
-   CRYPTO_NO_DETECTED  =  3,
-   CRYPTO_INVAL        =  4
+   CRYPTO_OK           =   0,
+   CRYPTO_ERR          =  -1,
+   CRYPTO_ERR_SSL      =  -2,
+   CRYPTO_NO_DETECTED  =  -3,
+   CRYPTO_INVAL        =  -4,
+   CRYPTO_PKCS7_ERR    =  -5
 } crypto_status;
 
 typedef enum Ecrypto_aes_mode
@@ -41,22 +42,6 @@ typedef enum Ecrypto_aes_mode
    E_AES128_ECB   = 0,
    E_AES128_CBC   = 1
 } crypto_aes_mode_t;
-
-/* Original frequencies from God's know where... */
-/* static float english_freq[26] = {
-    0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,  // A-G
-    0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749,  // H-N
-    0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758,  // O-U
-    0.00978, 0.02360, 0.00150, 0.01974, 0.00074                     // V-Z
-}; */
-
-/* Frequencies from 'Alice in wonderland' */
-static float english_freq[27] = {
-    0.0651, 0.0109, 0.0178, 0.0365, 0.1005, 0.0148, 0.0187,  // A-G
-    0.0546, 0.0557, 0.0011, 0.0086, 0.0349, 0.0156, 0.0520,  // H-N
-    0.0603, 0.0113, 0.0015, 0.0403, 0.0481, 0.0792, 0.0257,  // O-U
-    0.0063, 0.0198, 0.0011, 0.0168, 0.0006, 0.2022           // V-Z-SPACE
-};
 
 /* Public fuction definitions */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -85,16 +70,16 @@ crypto_status FixedXOR_SingleCharASCII(uint8_t const * const Buffer, uint8_t Sin
 crypto_status English_Score(uint8_t *phrase, int phrase_sz, float *score);
 
 crypto_status BreakFixedXOR(uint8_t const * const encripted_buff,
-										         uint16_t const encripted_buff_len,
-										         uint8_t * const decripted_buff,
-										         uint16_t * const decripted_buff_len,
-										         float * const final_score
-                                       );
+                              uint16_t const encripted_buff_len,
+										uint8_t * const decripted_buff,
+										uint16_t * const decripted_buff_len,
+										float * const final_score
+                              );
 
-crypto_status BreakFixedASCIIXOR_Key(	uint8_t const * const encripted_buff,
-										   uint16_t const encripted_buff_len,
-                                 uint8_t * const key
-										   );
+crypto_status BreakFixedASCIIXOR_Key(uint8_t const * const encripted_buff,
+                                       uint16_t const encripted_buff_len,
+                                       uint8_t * const key
+                                       );
 
 crypto_status EncryptRepeatingKeyXor(uint8_t const * const plaintext,
                                        uint16_t const plain_len,
@@ -139,6 +124,12 @@ crypto_status Detect_AES_ECB(uint8_t const * const pu8_buff,
 
 crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
                         uint8_t ** pu8_outbuf, uint32_t * pu32_padded_size);
+
+crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const u32_buf_sz, 
+                                    uint16_t const u16_block_size, uint16_t * const u16_pad_size);
+
+crypto_status PKCS7_pad_strip(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
+                              uint8_t ** ppu8_outbuf, uint32_t * const pu32_stripped_size);
 
 crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
                                        uint16_t const u16_cipherlen,
