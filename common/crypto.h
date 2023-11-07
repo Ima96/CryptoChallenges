@@ -8,6 +8,10 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Includes */
 #include <stdio.h>
 #include <stdint.h>
@@ -180,4 +184,8 @@ crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_ms
 crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len,
                                                    uint8_t ** ppu8_obtained_unknown_msg);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // _CRYPTO_H_

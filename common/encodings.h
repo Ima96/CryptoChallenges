@@ -8,6 +8,10 @@
 #ifndef _ENCODINGS_H_
 #define _ENCODINGS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Includes */
 #include <stdio.h>
 #include <stdint.h>
@@ -48,4 +52,8 @@ uint8_t *EncodeBase64(uint8_t const * const pu8_buf, uint16_t const u16_len, uin
 
 uint8_t *ParseCookieAsJson(uint8_t const * const pu8_ck_buf);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // _ENCODINGS_H_
