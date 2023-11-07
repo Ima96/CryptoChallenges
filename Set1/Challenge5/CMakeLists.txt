@@ -24,6 +24,6 @@ target_link_libraries(ch5_encript-rkxor encodings cryptopals)
 
 add_custom_command(
    TARGET ch5_encript-rkxor POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/plaintext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/plaintext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/plaintext5.txt
    COMMENT "Copying Challenge 5 necessary files to output location..."
 )

@@ -81,7 +81,7 @@ struct OBasicUserProfile bup_attacker(void)
    uint8_t * pu8_crafted_email = NULL;
 
    i32_res = PKCS7_pad(au8_admin_role_str, 
-                        strlen(au8_admin_role_str), 
+                        u8_admin_role_len, 
                         AES128_KEY_SIZE, 
                         &pu8_padded_admin_str, 
                         &i32_pad_len);

@@ -24,6 +24,6 @@ target_link_libraries(ch6_break-rkxor encodings cryptopals)
 
 add_custom_command(
    TARGET ch6_break-rkxor POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/ciphertext.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/ciphertext6.txt
    COMMENT "Copying Challenge 6 necessary files to output location..."
 )

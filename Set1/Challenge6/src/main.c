@@ -72,7 +72,6 @@ int main(int argc, char * argv[])
       return -1;
    }
 
-   crypto_status status = CRYPTO_ERR;
    FILE *fip = NULL;
    char c = 0;
    uint8_t *ciphertext = NULL;
@@ -151,7 +150,7 @@ int main(int argc, char * argv[])
             cipher_blocks[j][k] = bin_ciphertext[(k*curr_keysize)+j];
 
          BreakFixedASCIIXOR_Key(cipher_blocks[j], num_blocks, 
-                           &possible_keys[i][j]);
+                                 &possible_keys[i][j]);
       }
 
       for (int clean = 0; clean < curr_keysize; ++clean)

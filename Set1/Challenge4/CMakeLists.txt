@@ -24,6 +24,6 @@ target_link_libraries(ch4_detect encodings cryptopals)
 
 add_custom_command(
    TARGET ch4_detect POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/encripted.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/encripted.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/ciphertext4.txt
    COMMENT "Copying Challenge 4 necessary files to output location..."
 )

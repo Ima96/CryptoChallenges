@@ -11,7 +11,6 @@ int main(void)
 {
 
    crypto_status SStatus;
-   uint8_t au8_rnd_aes256_key[AES128_KEY_SIZE] = {0};
 
    uint8_t au8_message[50] = {'A'};
    crypto_aes_mode_t mode;

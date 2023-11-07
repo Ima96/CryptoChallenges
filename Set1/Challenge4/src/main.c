@@ -18,7 +18,7 @@
 int main(void)
 {
    FILE *fip = NULL;
-   char filename[125] = "./resources/encripted.txt";
+   char filename[125] = "./resources/ciphertext4.txt";
 
    if((fip = fopen(filename, "rb")) == NULL)
    {

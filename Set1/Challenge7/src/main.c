@@ -11,19 +11,19 @@
 #include "encodings.h"
 #include "crypto.h"
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    if (argc != 2)
    {
       printf("<ERROR> The executable needs at least 1 input argument!\n");
-      return;
+      return EXIT_FAILURE;
    }
 
    FILE *fip = NULL;
    if ((fip = fopen(argv[1], "r")) == NULL)
    {
       printf("<ERROR> Could not open the input file!\n");
-      return;
+      return EXIT_FAILURE;
    }
 
    /* Read Ciphertext */
@@ -104,4 +104,6 @@ cleanup:
    pu8_reciphertxt = NULL;
 
    Cleanup_OpenSSL();
+
+   return EXIT_SUCCESS;
 }

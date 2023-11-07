@@ -5,7 +5,7 @@
 
 #define BLOCK_SIZE   20U
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    crypto_status o_status = CRYPTO_ERR;
 
@@ -23,7 +23,7 @@ void main(int argc, char *argv[])
       printf("<ERROR> Something went wrong!\n");
       if (pu8_padded_str)
          free(pu8_padded_str);
-      return;
+      return EXIT_FAILURE;
    }
 
    printf("Padded buffer: ");
@@ -33,4 +33,6 @@ void main(int argc, char *argv[])
 
    if (pu8_padded_str)
       free(pu8_padded_str);
+   
+   return EXIT_SUCCESS;
 }

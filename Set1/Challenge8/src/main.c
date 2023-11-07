@@ -9,13 +9,13 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    FILE *fip = NULL;
    if ((fip = fopen(argv[1], "r")) == NULL)
    {
       printf("<ERROR> Could not open the file!\n");
-      return;
+      return EXIT_FAILURE;
    }
 
    /* Read file by lines into a matrix */
@@ -24,7 +24,7 @@ void main(int argc, char *argv[])
 
    cipherlines = readFileLines(fip, &cipherline_count);
    if (cipherlines == NULL)
-      return;
+      return EXIT_FAILURE;
 
    /* Detect AES-ECB for each line readed */
    for (int i = 0; i < cipherline_count; ++i)
@@ -42,4 +42,6 @@ void main(int argc, char *argv[])
    }
    if (cipherlines)
       free(cipherlines);
+   
+   return EXIT_SUCCESS;
 }

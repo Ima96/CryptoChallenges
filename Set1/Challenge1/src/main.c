@@ -20,7 +20,7 @@ int main(void)
 
 	if (fin == NULL)
 	{
-		printf("Error openning the file!\n");
+		printf("Error openning the file! Please execute from the folder ${PROJECT_ROOT_DIR}/build/bin...\n");
 		exit(EXIT_FAILURE);
 	}
 
