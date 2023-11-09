@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
       printf("%02X ", pu8_padded_str[i]);
    printf("\n");
 
+   printf("Padded string: %*s\n", u32_padded_size, pu8_padded_str);
+
    if (pu8_padded_str)
       free(pu8_padded_str);
    

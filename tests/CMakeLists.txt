@@ -29,8 +29,5 @@ target_link_libraries(
    ${TARGET} 
       gtest 
       gtest_main
-      encodings
-      cryptopals
-      misc
       pthread
 )

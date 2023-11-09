@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "crypto.h"
 #include "misc.h"
@@ -31,7 +32,7 @@ int main(void)
       else
          printf("Unknown...\n");
 
-      sleep(1);
+      usleep(100 * 1000);
    }
 
    return EXIT_SUCCESS;

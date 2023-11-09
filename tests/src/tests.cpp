@@ -13,179 +13,210 @@
  **********************************************************************************************************************/
 #include <iostream>
 #include <stdint.h>
+// Exec command
+#include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <array>
 
 #include "gtest/gtest.h"
-#include "crypto.h"
-#include "encodings.h"
-#include "misc.h"
+#include "golden.h"
+// #include "crypto.h"
+// #include "encodings.h"
+// #include "misc.h"
 
+std::string exec(const char* cmd) {
+   std::array<char, 128> buffer;
+   std::string result;
+   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+   if (!pipe) {
+      throw std::runtime_error("popen() failed!");
+   }
+   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+      result += buffer.data();
+   }
+   return result;
+}
 
 TEST(Set1, ch1_Hex2Base64)
 {
-   uint8_t au8_ascii_hex_in[] = 
-               "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-   int32_t i32_ascii_hex_len = sizeof(au8_ascii_hex_in) - 1;
-
-   std::cout << "The hex(ascii) string: " << au8_ascii_hex_in << std::endl;
-
-   uint8_t * pu8_hex = AsciiHex2Bin(au8_ascii_hex_in, i32_ascii_hex_len);
-
-   uint8_t * pu8_base64 = Hex2Base64(pu8_hex, i32_ascii_hex_len);
-
-   uint8_t au8_base64_golden[] = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
-
-   char * pc_str_golden = reinterpret_cast<char *>(au8_base64_golden);
-   char * pc_str_candidate = reinterpret_cast<char *>(pu8_base64);
-   ASSERT_STREQ(pc_str_golden, pc_str_candidate);
-
-   std::cout << "Obtained Base64 string is: " << pc_str_candidate << std::endl;
+   std::string cmd_result = exec("./ch1_hex2base64");
    
-   free(pu8_hex);
-   free(pu8_base64);
+   ASSERT_NE(std::string::npos, cmd_result.find(ch1_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch1_golden_result), ch1_golden_result.length()) << std::endl;
 }
 
 TEST(Set1, ch2_FixedXOR)
 {
-   uint8_t au8_buff1[] = "1c0111001f010100061a024b53535009181c";
-   uint8_t au8_buff2[] = "686974207468652062756c6c277320657965";
-   int32_t i32_buff1_sz = sizeof(au8_buff1) - 1;
-   int32_t i32_buff2_sz = sizeof(au8_buff2) - 1;
+   std::string cmd_result = exec("./ch2_XOR");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch2_golden_result));
 
-   uint8_t * pu8_hex_buff1 = AsciiHex2Bin(au8_buff1, i32_buff1_sz);
-   uint8_t * pu8_hex_buff2 = AsciiHex2Bin(au8_buff2, i32_buff2_sz);
-
-   uint8_t * pu8_XORed_bin = new uint8_t [i32_buff1_sz];
-   ASSERT_EQ(CRYPTO_OK, FixedXOR(pu8_hex_buff1, pu8_hex_buff2, i32_buff1_sz, i32_buff2_sz, pu8_XORed_bin));
-
-   uint8_t * pu8_XORed_ascii = BinHex2Ascii(pu8_XORed_bin, i32_buff1_sz);
-
-   uint8_t au8_golden_res[] = "746865206b696420646f6e277420706c6179";
-   char * pc_str_golden = reinterpret_cast<char *>(au8_golden_res);
-   char * pc_str_candidate = reinterpret_cast<char *>(pu8_XORed_ascii);
-   ASSERT_STREQ(pc_str_golden, pc_str_candidate);
-
-   std::cout << "Obtained XORed string is: " << pc_str_candidate << std::endl;
-
-   free(pu8_hex_buff1);
-   free(pu8_hex_buff2);
-   delete [] pu8_XORed_bin;
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch2_golden_result), ch2_golden_result.length()) << std::endl;
 }
 
 TEST(Set1, ch3_SingleByteXORCipher)
 {
-   uint8_t au8_the_string[] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-   uint8_t * pu8_hex_string = NULL;
-   int32_t i32_string_sz = 0;
+   std::string cmd_result = exec("./ch3_decipher");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch3_golden_result));
 
-   printf("The encrypted string: %s\n", au8_the_string);
-
-   i32_string_sz = sizeof(au8_the_string) - 1;
-   pu8_hex_string = AsciiHex2Bin(au8_the_string, i32_string_sz);
-
-   float f_score = 0, f_best_score = 10000;
-   uint8_t u8_best_key_candidate = 0;
-   uint8_t * pu8_decryption_attempt = new uint8_t [i32_string_sz];
-   uint8_t * pu8_best_decryption_attempt = new uint8_t [i32_string_sz + 1];
-   for (uint8_t i = 32; i < 127; i++)
-   {
-      uint8_t u8_current_key_attempt;
-      int32_t i32_decrypt_size = 0;
-
-      u8_current_key_attempt = i;
-
-      ASSERT_EQ(CRYPTO_OK, FixedXOR_SingleChar(pu8_hex_string, u8_current_key_attempt, 
-                                                i32_string_sz, pu8_decryption_attempt, 
-                                                &i32_decrypt_size));
-
-      English_Score(pu8_decryption_attempt, i32_decrypt_size, &f_score);
-
-      if (f_score < f_best_score)
-      {
-         f_best_score = f_score;
-         u8_best_key_candidate = u8_current_key_attempt;
-         memcpy(pu8_best_decryption_attempt, pu8_decryption_attempt, i32_decrypt_size);
-         pu8_best_decryption_attempt[i32_decrypt_size] = '\0';
-      }
-   }
-
-   printf("========================================================================\n");
-   printf("The best key candidate for the decryption is: %c\n", u8_best_key_candidate);
-
-   char ac_golden_res[] = "Cooking MC's like a pound of bacon";
-   char * pc_candidate_res = reinterpret_cast<char *>(pu8_best_decryption_attempt);
-   ASSERT_STREQ(ac_golden_res, pc_candidate_res);
-
-   printf("The decryption result is:\n\"%s\"\n", pu8_best_decryption_attempt);
-
-   free(pu8_hex_string);
-   pu8_hex_string = NULL;
-
-   delete [] pu8_decryption_attempt;
-   delete [] pu8_best_decryption_attempt;
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch3_golden_result), ch3_golden_result.length()) << std::endl;
 }
 
 TEST(Set1, ch4_DetectSingleByteXOR)
 {
-   FILE * ps_fin = NULL;
-   uint16_t u16_line_count = 0;
-   char ac_filename[125] = "./resources/ciphertext4.txt";
+   std::string cmd_result = exec("./ch4_detect");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch4_golden_result));
 
-   ps_fin = fopen(ac_filename, "rb");
-   ASSERT_NE(nullptr, ps_fin) << "Run the test binary from inside the bin folder, "
-                                 "and ensure access to \"./resources/ciphertext4.txt\"\n";
-
-   uint8_t ** ppu8_file_strings = readFileLines(ps_fin, &u16_line_count);
-   ASSERT_NE(nullptr, ppu8_file_strings);
-
-   uint8_t * pu8_hex_line = NULL;
-   uint8_t * pu8_line = NULL;
-   uint8_t * pu8_decrypted_buff = NULL;
-   uint8_t * pu8_message = NULL;
-   uint16_t u16_line_len = 0;
-   uint16_t u16_decrypted_buff_len = 0;
-   float f_line_score = 0;
-   float f_best_line_score = 10000;
-   uint16_t u16_line_detected = 0;
-
-   for(uint16_t u16_idx = 0; u16_idx < u16_line_count; u16_idx++)
-   {
-      pu8_line = ppu8_file_strings[u16_idx];
-      u16_line_len = strlen(reinterpret_cast<char *>(pu8_line));
-      pu8_hex_line = AsciiHex2Bin(pu8_line, u16_line_len);
-
-      if(pu8_decrypted_buff)
-         free(pu8_decrypted_buff);
-      pu8_decrypted_buff = new uint8_t [u16_line_len];//(uint8_t *)calloc(u16_line_len, sizeof(uint8_t));
-      ASSERT_EQ(CRYPTO_OK, BreakFixedXOR(pu8_hex_line, u16_line_len, pu8_decrypted_buff, 
-                                          &u16_decrypted_buff_len, &f_line_score));
-      
-      free(pu8_hex_line);
-      pu8_hex_line = NULL;
-
-      if (f_line_score < f_best_line_score)
-      {
-         u16_line_detected = u16_idx;
-         f_best_line_score = f_line_score;
-         if (pu8_message)
-            free(pu8_message);
-         pu8_message = new uint8_t [u16_decrypted_buff_len+1]; //(uint8_t *) calloc(u16_decrypted_buff_len+1, sizeof(uint8_t));
-         memcpy(pu8_message, pu8_decrypted_buff, u16_decrypted_buff_len);
-         pu8_message[u16_decrypted_buff_len] = '\0';
-      }
-   }
-
-   ASSERT_EQ(170, u16_line_detected);
-
-   char ac_golden_res[] = "Now that the party is jumping\n";
-   char * pc_candidate_res = reinterpret_cast<char *>(pu8_message);
-   ASSERT_STREQ(pc_candidate_res, ac_golden_res);
-
-   std::cout << "The detected string is in line #" << u16_line_detected 
-               << " and is the following\n\"" << pu8_message << "\"" << std::endl;
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch4_golden_result), ch4_golden_result.length()) << std::endl;
 
 }
 
 TEST(Set1, ch5_RepeatingKeyXOR)
 {
+   std::string cmd_result = exec("./ch5_encript-rkxor ./resources/plaintext5.txt ICE");
    
+   ASSERT_NE(std::string::npos, cmd_result.find(ch5_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch5_golden_result), ch5_golden_result.length()) << std::endl;
+}
+
+TEST(Set1, ch6_BreakRepeatingKeyXOR)
+{
+   std::string cmd_result = exec("./ch6_break-rkxor ./resources/ciphertext6.txt");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch6_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch6_golden_result), ch6_golden_result.length()) << std::endl;
+}
+
+TEST(Set1, ch7_AES_ECB)
+{
+   std::string cmd_result = exec("./ch7_decrypt_aes-ecb ./resources/ciphertext7.txt");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch7_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch7_golden_result), ch7_golden_result.length()) << std::endl;
+}
+
+TEST(Set1, ch8_DetectAES_ECB)
+{
+   std::string cmd_result = exec("./ch8_detect_aes-ecb ./resources/ciphertext8.txt");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch8_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch8_golden_result), ch8_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch9_PKCS7_Padding)
+{
+   std::string cmd_result = exec("./ch9_pad-pkcs7");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch9_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch9_golden_result), ch9_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch10_ImplementCBC)
+{
+   std::string cmd_result = exec("./ch10_decrypt-cbc ./resources/ciphertext10.txt");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch10_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch10_golden_result), ch10_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch11_ECB_CBC_Oracle)
+{
+   std::cout << "Challenge 11 takes a little time, its executing..." << std::endl;
+   std::string cmd_result = exec("./ch11_oracle");
+   
+   std::string current_string;
+   std::vector<std::string> lines;
+   for (uint16_t u16_idx = 0; u16_idx < cmd_result.length(); u16_idx++)
+   {
+      char c_current_char = cmd_result[u16_idx];
+      if (c_current_char == '\n')
+      {
+         lines.push_back(current_string);
+         current_string.clear();
+      }
+      else
+         current_string.push_back(c_current_char);
+   }
+   
+   // Check correct detection
+   for (uint16_t u16_idx = 0; u16_idx < lines.size(); u16_idx += 2)
+   {
+      if (lines[u16_idx].find("Using CBC") != std::string::npos)
+         ASSERT_NE(std::string::npos, lines[u16_idx+1].find("Detected CBC!!"));
+      else if (lines[u16_idx].find("Using ECB") != std::string::npos)
+         ASSERT_NE(std::string::npos, lines[u16_idx+1].find("Detected ECB!"));
+      else
+         FAIL();
+   }
+}
+
+TEST(Set2, ch12_Byte_At_A_Time)
+{
+   std::string cmd_result = exec("./ch12_baat_ecb_break");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch12_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch12_golden_result), ch12_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch13_ecb_cut_n_paste)
+{
+   std::string cmd_result = exec("./ch13_ecb_cut_n_paste");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch13_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch13_golden_result), ch13_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch14_ecb_baat_harder)
+{
+   std::string cmd_result = exec("./ch14_ecb_baat_harder");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch14_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch14_golden_result), ch14_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch15_pkcs7_validation)
+{
+   std::string cmd_result = exec("./ch15_pkcs7_validation");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch15_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch15_golden_result), ch15_golden_result.length()) << std::endl;
+}
+
+TEST(Set2, ch16_bitflipping_cbc)
+{
+   std::string cmd_result = exec("./ch16_bitflipping_cbc");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch16_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch16_golden_result), ch16_golden_result.length()) << std::endl;
 }

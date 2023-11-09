@@ -12,37 +12,21 @@ int numPlaces (int n);
 int main(void)
 {
    int32_t res = 0;
-   struct OBasicUserProfile user1;
-   OBasicUserProfile_create(&user1);
-   
-   uint8_t au8_user1_email[] = "zer0@gmail.com";
-
-   res = OBasicUserProfile_gen_profile(&user1, au8_user1_email);
-
-   if (res != E_BUP_OK)
-   {
-      printf("Something went wrong!\n");
-      return res;
-   }
-
-   printf("Encrypted cookie: ");
-   for (int32_t i32_i = 0; i32_i < user1.m_i32_enc_len; i32_i++)
-   {
-      printf("%02X ", user1.m_pu8_encrypted_cookie[i32_i]);
-   }
-   printf("\n");
-
-   OBasicUserProfile_destroy(&user1);
 
    struct OBasicUserProfile o_hacked_profile = bup_attacker();
 
    res = OBasicUserProfile_decrypt_and_parse(&o_hacked_profile);
-   printf("Directly role value after attack (ADMIN = 1): %d\n", o_hacked_profile.m_e_role);
+   if (E_BUP_OK != res)
+   {
+      printf("Could not decrypt and parse the hacked profile...\n");
+      return EXIT_FAILURE;
+   }
+   printf("Directly role value after attack (if admin = 1): %d\n", o_hacked_profile.m_e_role);
 
    OBasicUserProfile_destroy(&o_hacked_profile);
-   staticAesEcbKeyRemove();
+   staticAesKeyRemove();
 
-   return 0;
+   return EXIT_SUCCESS;
 }
 
 int numPlaces (int n) 
