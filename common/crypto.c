@@ -558,7 +558,7 @@ crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const
    else
    {
       uint8_t u8_num_pads = pu8_buf[u32_buf_sz-1];
-      if (u8_num_pads > u16_block_size)
+      if (u8_num_pads > u16_block_size || u8_num_pads == 0)
       {
          e_status = CRYPTO_PKCS7_ERR;
       }
