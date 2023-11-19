@@ -18,7 +18,10 @@ option(DEBUG_CRYPTO "Enable debugging in crypto library" OFF)
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-   add_definitions(-DDEBUG_APP)
+   if (DEBUG_APP)
+      add_definitions(-DDEBUG_MAIN)
+      message(STATUS "${TARGET_PRJ}: Debugging application")
+   endif()
 endif()
 
 add_executable(${TARGET} 
@@ -30,4 +33,5 @@ target_link_libraries(
    ${TARGET}
    OpenSSL::SSL 
    cryptopals
+   encodings
 )

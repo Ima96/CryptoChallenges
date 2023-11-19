@@ -15,6 +15,7 @@ set(BUILD_OBJECTS_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/.obj)
 option(DEBUG_ENCODINGS  "Enable debugging in encoding library."   OFF)
 option(DEBUG_CRYPTO     "Enable debugging in crypto library."     OFF)
 option(BUILD_TESTS      "Enable building tests of challenges."    OFF)
+option(DEBUG_APP        "Enable debugging the main app"           OFF)
 
 if (DEBUG_ENCODINGS)
 	add_definitions(-DDEBUG_ENC)
@@ -31,7 +32,9 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 if (build_type STREQUAL debug)
-   add_definitions(-DDEBUG_APP)
+   if (DEBUG_APP)
+      add_definitions(-DDEBUG_MAIN)
+   endif()
 endif()
 
 message(STATUS "Building for: ${CMAKE_BUILD_TYPE}")
