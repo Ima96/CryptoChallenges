@@ -632,7 +632,7 @@ crypto_status GeneratePseudoRandomBytes(uint8_t * const rnd_buf,
       
       for (int i = 0; i < n_bytes; ++i)
       {
-         rnd_buf[i] = (uint8_t) (random() % 255 + 1);
+         rnd_buf[i] = (uint8_t) (random() % (255 + 1));
       }
       status = CRYPTO_OK;
    }
@@ -730,7 +730,7 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
 }
 
 static uint8_t * vf_pu8_static_key = NULL;
-crypto_status staticAesEcbKeyCheckAndInit(void)
+crypto_status staticAesKeyCheckAndInit(void)
 {
    crypto_status e_status = CRYPTO_ERR;
 
@@ -745,7 +745,7 @@ crypto_status staticAesEcbKeyCheckAndInit(void)
    return e_status;
 }
 
-void staticAesEcbKeyRemove(void)
+void staticAesKeyRemove(void)
 {
    if (vf_pu8_static_key)
    {
@@ -764,7 +764,7 @@ crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
    uint8_t * pu8_temp_buffer = NULL;
    int32_t i32_temp_cipherlen = 0;
 
-   e_status = staticAesEcbKeyCheckAndInit();
+   e_status = staticAesKeyCheckAndInit();
    if (e_status != CRYPTO_OK)
    {
       DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
@@ -800,7 +800,7 @@ crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
    uint8_t * pu8_temp_buffer = NULL;
    int32_t i32_temp_plainlen = 0;
 
-   e_status = staticAesEcbKeyCheckAndInit();
+   e_status = staticAesKeyCheckAndInit();
    if (e_status != CRYPTO_OK)
    {
       DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
@@ -865,7 +865,7 @@ crypto_status baatOracle(uint8_t const * const pu8_msg,
    }
    else
    {
-      e_status = staticAesEcbKeyCheckAndInit();
+      e_status = staticAesKeyCheckAndInit();
       if (e_status == CRYPTO_OK)
       {
          uint8_t * pu8_concat_msg = NULL;
@@ -1141,7 +1141,7 @@ crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_ms
    *ppu8_obtained_unknown_msg = pu8_discovered_text;
 
    baatOracleUnknownStrDeinit();
-   staticAesEcbKeyRemove();
+   staticAesKeyRemove();
    
    return EStatus;
 }
@@ -1211,7 +1211,7 @@ crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unk
    
    /* Clean-up */
    baatOracleUnknownStrDeinit();
-   staticAesEcbKeyRemove();
+   staticAesKeyRemove();
 
    if (pu8_rnd_prepend)
       free(pu8_rnd_prepend);

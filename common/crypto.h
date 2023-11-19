@@ -160,9 +160,9 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
                                     uint16_t const u16_msg_sz,
                                     crypto_aes_mode_t * const e_detected_mode);
 
-crypto_status staticAesEcbKeyCheckAndInit(void);
+crypto_status staticAesKeyCheckAndInit(void);
 
-void staticAesEcbKeyRemove(void);
+void staticAesKeyRemove(void);
 
 crypto_status encryptBufferAesEcbStaticKey(uint8_t const * const pu8_buffer,
                                              uint16_t const u16_bufferlen,
