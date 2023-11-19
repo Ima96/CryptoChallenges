@@ -135,22 +135,6 @@ crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const
 crypto_status PKCS7_pad_strip(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
                               uint8_t ** ppu8_outbuf, uint32_t * const pu32_stripped_size);
 
-crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
-                                       uint16_t const u16_cipherlen,
-                                       uint8_t const * const pu8_key,
-                                       uint8_t const * const pu8_initial_iv,
-                                       uint8_t ** const pu8_plaintxt,
-                                       uint16_t * const pu16_plainlen
-                                       );
-
-crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
-                                       uint16_t const u16_plainlen,
-                                       uint8_t const * const pu8_key,
-                                       uint8_t const * const pu8_initial_iv,
-                                       uint8_t ** const ppu8_ciphertxt,
-                                       uint16_t * const pu16_cipherlen
-                                       );
-
 crypto_status GeneratePseudoRandomBytes(uint8_t * const rnd_buf, 
                                           uint16_t const n_bytes);
 
@@ -184,6 +168,19 @@ crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_ms
 crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len,
                                                    uint8_t ** ppu8_obtained_unknown_msg);
 
+crypto_status AES128CBC_decrypt_OpenSSL(uint8_t const * const pu8_ciphertxt,
+                                       uint16_t const u16_cipherlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const pu8_plaintxt,
+                                       uint16_t * const pu16_plainlen);
+
+crypto_status AES128CBC_encrypt_OpenSSL(uint8_t const * const pu8_plaintxt,
+                                       uint16_t const u16_plainlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const ppu8_ciphertxt,
+                                       uint16_t * const pu16_cipherlen);
 #ifdef __cplusplus
 }
 #endif
