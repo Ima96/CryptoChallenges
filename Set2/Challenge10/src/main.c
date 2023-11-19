@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
 
    Init_OpenSSL();
 
-   e_status = DecryptAES128_CBC_OpenSSL(pu8_ciphertext, u16_cipherlen, a16_u8_key, a16_u8_iv, &pu8_plaintext, &u16_plainlen);
+   e_status = AES128CBC_decrypt_OpenSSL(pu8_ciphertext, u16_cipherlen, a16_u8_key, a16_u8_iv, &pu8_plaintext, &u16_plainlen);
 
    if (e_status != CRYPTO_OK)
    {
@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
 
    uint8_t * pu8_reciphertext = NULL;
    uint16_t u16_recipherlen = 0;
-   e_status = EncryptAES128_CBC_OpenSSL(pu8_plaintext, u16_plainlen, a16_u8_key, a16_u8_iv, &pu8_reciphertext, &u16_recipherlen);
+   e_status = AES128CBC_encrypt_OpenSSL(pu8_plaintext, u16_plainlen, a16_u8_key, a16_u8_iv, &pu8_reciphertext, &u16_recipherlen);
 
    if (u16_cipherlen != u16_recipherlen)
       printf("Cipher lengths do not coincide...\nOriginal: %d vs Re-cipher: %d\n", u16_cipherlen, u16_recipherlen);
