@@ -5,7 +5,7 @@
 - [State of completion](#the-cryptopals-crypto-challenges)
 - [Usage instructions](#usage-instructions)
 
-## The CryptoPals Crypto Challenges
+## [The CryptoPals Crypto Challenges](https://www.cryptopals.com/)
 ### Set 1: Basics
 - [x] Challenge 1: Convert hex to base64
 - [x] Challenge 2: Fixed XOR
@@ -27,7 +27,7 @@
 - [x] Challenge 16: CBC bitflipping attacks
 
 ### Set 3: Block & stream crypto
-- [ ] Challenge 17: The CBC padding oracle
+- [x] Challenge 17: The CBC padding oracle
 - [ ] Challenge 18: Implement CTR, the stream cipher mode
 - [ ] Challenge 19: Break fixed-nonce CTR mode using substitutions
 - [ ] Challenge 20: Break fixed-nonce CTR statistically
