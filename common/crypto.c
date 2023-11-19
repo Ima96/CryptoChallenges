@@ -612,155 +612,6 @@ crypto_status PKCS7_pad_strip(uint8_t const * const pu8_buf, uint32_t const u32_
    return e_status;
 }
 
-crypto_status DecryptAES128_CBC_OpenSSL(uint8_t const * const pu8_ciphertxt,
-                                       uint16_t const u16_cipherlen,
-                                       uint8_t const * const pu8_key,
-                                       uint8_t const * const pu8_initial_iv,
-                                       uint8_t ** const ppu8_plaintxt,
-                                       uint16_t * const pu16_plainlen
-                                       )
-{
-   crypto_status e_status = CRYPTO_ERR;
-
-   uint8_t a16_u8_iv[AES128_KEY_SIZE] = {0};
-   memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
-
-   if (0 != (u16_cipherlen % AES128_KEY_SIZE))
-   {
-      printf("<ERROR> Ciphertext is not a multiple of the AES128 block size (16)...\n");
-      return e_status;
-   }
-
-   uint16_t u16_num_iter = u16_cipherlen / AES128_KEY_SIZE;
-   uint8_t * pu8_temp_buf = NULL;
-   int i_templen = 0;
-
-   e_status = DecryptAES128_ECB_OpenSSL(pu8_ciphertxt, u16_cipherlen, pu8_key, &pu8_temp_buf, &i_templen);
-   if (e_status != CRYPTO_OK)
-   {
-      printf("<ERROR> Could not decrypt ciphertext...\n");
-      if (pu8_temp_buf)
-      {
-         free(pu8_temp_buf);
-         pu8_temp_buf = NULL;
-      }
-      return e_status;
-   }
-
-   for (int i = 0; i < u16_num_iter; ++i)
-   {
-
-      e_status = FixedXOR(a16_u8_iv, &pu8_temp_buf[i*AES128_KEY_SIZE], AES128_KEY_SIZE, AES128_KEY_SIZE, &pu8_temp_buf[i*AES128_KEY_SIZE]);
-      if (e_status != CRYPTO_OK)
-      {
-         printf("<ERROR> Fixed XOR went wrong...\n");
-         if (pu8_temp_buf)
-         {
-            free(pu8_temp_buf);
-            pu8_temp_buf = NULL;
-         }
-         break;
-      }
-      
-      memcpy(a16_u8_iv, &pu8_ciphertxt[i*AES128_KEY_SIZE], AES128_KEY_SIZE);
-   }
-
-   *ppu8_plaintxt = pu8_temp_buf;
-   *pu16_plainlen = i_templen;
-   return e_status;
-}
-
-crypto_status EncryptAES128_CBC_OpenSSL(uint8_t const * const pu8_plaintxt,
-                                       uint16_t const u16_plainlen,
-                                       uint8_t const * const pu8_key,
-                                       uint8_t const * const pu8_initial_iv,
-                                       uint8_t ** const ppu8_ciphertxt,
-                                       uint16_t * const pu16_cipherlen
-                                       )
-{
-   crypto_status e_status = CRYPTO_ERR;
-
-   uint8_t * pu8_plaintxt_pad = NULL;
-   uint8_t a16_u8_iv[AES128_KEY_SIZE] = {0};
-   uint32_t u32_plainlen_pad = 0;
-
-   memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
-
-   if (CRYPTO_OK != PCKS7_pad_validation(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, NULL))
-   {
-      // Not padded, padding...
-      e_status = PKCS7_pad(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, &pu8_plaintxt_pad, &u32_plainlen_pad);
-      if (e_status != CRYPTO_OK)
-         return e_status;
-   }
-   else
-   {
-      // Valid pad already, no need to pad...
-      u32_plainlen_pad = u16_plainlen;
-      pu8_plaintxt_pad = (uint8_t *) calloc(u16_plainlen, sizeof(uint8_t));
-      memcpy(pu8_plaintxt_pad, pu8_plaintxt, u16_plainlen);
-   }
-
-   uint16_t u16_num_iter = u32_plainlen_pad / AES128_KEY_SIZE;
-   uint8_t * pu8_temp_result = (uint8_t *) calloc(u32_plainlen_pad, sizeof(uint8_t));
-   uint8_t * pu8_block_cipher_feed = (uint8_t *) calloc(AES128_KEY_SIZE, sizeof(uint8_t));
-   uint8_t * pu8_block_cipher_res = NULL;
-   uint16_t u16_cipherlen_res = 0;
-   
-   for (int i = 0; i < u16_num_iter; ++i)
-   {
-      
-      uint8_t a16_u8_plain_block[AES128_KEY_SIZE] = {0};
-      memcpy(a16_u8_plain_block, &pu8_plaintxt_pad[i*AES128_KEY_SIZE], AES128_KEY_SIZE);
-      e_status = FixedXOR(a16_u8_iv, a16_u8_plain_block, AES128_KEY_SIZE, AES128_KEY_SIZE, pu8_block_cipher_feed);
-      if (e_status != CRYPTO_OK)
-      {
-         break;
-      }
-
-      int32_t i32_cipher_res_len = 0;
-      e_status = EncryptAES128_ECB_OpenSSL(pu8_block_cipher_feed, AES128_KEY_SIZE, pu8_key, &pu8_block_cipher_res, &i32_cipher_res_len);
-      if (e_status != CRYPTO_OK)
-      {
-         break;
-      }
-      
-      memcpy(&pu8_temp_result[i*AES128_KEY_SIZE], pu8_block_cipher_res, AES128_KEY_SIZE);
-      memcpy(a16_u8_iv, pu8_block_cipher_res, AES128_KEY_SIZE);
-      u16_cipherlen_res += AES128_KEY_SIZE;
-
-      free(pu8_block_cipher_res);
-      pu8_block_cipher_res = NULL;
-      
-   }
-
-   if (pu8_block_cipher_feed)
-   {
-      free(pu8_block_cipher_feed);
-   }
-   pu8_block_cipher_feed = NULL;
-
-   if (pu8_block_cipher_res)
-   {
-      free(pu8_block_cipher_res);
-   }
-   pu8_block_cipher_res = NULL;
-
-   if (pu8_plaintxt_pad)
-   {
-      free(pu8_plaintxt_pad);
-   }
-   pu8_plaintxt_pad = NULL;
-
-   if (e_status == CRYPTO_OK)
-   {
-      *ppu8_ciphertxt = pu8_temp_result;
-      *pu16_cipherlen = u16_cipherlen_res;
-   }
-   
-   return e_status;
-}
-
 static uint8_t vf_u8_seed_initialized = 0;
 crypto_status GeneratePseudoRandomBytes(uint8_t * const rnd_buf, 
                                           uint16_t const n_bytes)
@@ -840,7 +691,7 @@ crypto_status OracleAES128_ECB_CBC(uint8_t const * const pu8_message,
                if (SStatus != CRYPTO_OK)
                   break;
 
-               SStatus = EncryptAES128_CBC_OpenSSL(pu8_msg_alt, u16_msg_sz, au8_rnd_aes128_key, au8_rnd_aes128_iv, 
+               SStatus = AES128CBC_encrypt_OpenSSL(pu8_msg_alt, u16_msg_sz, au8_rnd_aes128_key, au8_rnd_aes128_iv, 
                                                    &pu8_ciphertext, &u16_cipherlen);
                break;
 
@@ -1366,5 +1217,153 @@ crypto_status oneByteAtATime_ECB_Decryption_Harder(uint8_t const * const pu8_unk
       free(pu8_rnd_prepend);
    pu8_rnd_prepend = NULL;
 
+   return e_status;
+}
+
+crypto_status AES128CBC_decrypt_OpenSSL(uint8_t const * const pu8_ciphertxt,
+                                       uint16_t const u16_cipherlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const ppu8_plaintxt,
+                                       uint16_t * const pu16_plainlen)
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   uint8_t a16_u8_iv[AES128_KEY_SIZE] = {0};
+   memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
+
+   if (0 != (u16_cipherlen % AES128_KEY_SIZE))
+   {
+      LOG_CRYPTO_ERROR("Ciphertext is not a multiple of the AES128 block size (16)...\n");
+      return e_status;
+   }
+
+   uint16_t u16_num_iter = u16_cipherlen / AES128_KEY_SIZE;
+   uint8_t * pu8_temp_buf = NULL;
+   int i_templen = 0;
+
+   e_status = DecryptAES128_ECB_OpenSSL(pu8_ciphertxt, u16_cipherlen, pu8_key, &pu8_temp_buf, &i_templen);
+   if (e_status != CRYPTO_OK)
+   {
+      LOG_CRYPTO_ERROR("Could not decrypt ciphertext...\n");
+      if (pu8_temp_buf)
+      {
+         free(pu8_temp_buf);
+         pu8_temp_buf = NULL;
+      }
+      return e_status;
+   }
+
+   for (int i = 0; i < u16_num_iter; ++i)
+   {
+
+      e_status = FixedXOR(a16_u8_iv, &pu8_temp_buf[i*AES128_KEY_SIZE], AES128_KEY_SIZE, AES128_KEY_SIZE, &pu8_temp_buf[i*AES128_KEY_SIZE]);
+      if (e_status != CRYPTO_OK)
+      {
+         LOG_CRYPTO_ERROR("Fixed XOR went wrong...\n");
+         if (pu8_temp_buf)
+         {
+            free(pu8_temp_buf);
+            pu8_temp_buf = NULL;
+         }
+         break;
+      }
+      
+      memcpy(a16_u8_iv, &pu8_ciphertxt[i*AES128_KEY_SIZE], AES128_KEY_SIZE);
+   }
+
+   *ppu8_plaintxt = pu8_temp_buf;
+   *pu16_plainlen = i_templen;
+   return e_status;
+}
+
+crypto_status AES128CBC_encrypt_OpenSSL(uint8_t const * const pu8_plaintxt,
+                                       uint16_t const u16_plainlen,
+                                       uint8_t const * const pu8_key,
+                                       uint8_t const * const pu8_initial_iv,
+                                       uint8_t ** const ppu8_ciphertxt,
+                                       uint16_t * const pu16_cipherlen
+                                       )
+{
+   crypto_status e_status = CRYPTO_ERR;
+
+   uint8_t * pu8_plaintxt_pad = NULL;
+   uint8_t a16_u8_iv[AES128_KEY_SIZE] = {0};
+   uint32_t u32_plainlen_pad = 0;
+
+   memcpy(a16_u8_iv, pu8_initial_iv, AES128_KEY_SIZE);
+
+   if (CRYPTO_OK != PCKS7_pad_validation(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, NULL))
+   {
+      // Not padded, padding...
+      e_status = PKCS7_pad(pu8_plaintxt, u16_plainlen, AES128_KEY_SIZE, &pu8_plaintxt_pad, &u32_plainlen_pad);
+      if (e_status != CRYPTO_OK)
+         return e_status;
+   }
+   else
+   {
+      // Valid pad already, no need to pad...
+      u32_plainlen_pad = u16_plainlen;
+      pu8_plaintxt_pad = (uint8_t *) calloc(u16_plainlen, sizeof(uint8_t));
+      memcpy(pu8_plaintxt_pad, pu8_plaintxt, u16_plainlen);
+   }
+
+   uint16_t u16_num_iter = u32_plainlen_pad / AES128_KEY_SIZE;
+   uint8_t * pu8_temp_result = (uint8_t *) calloc(u32_plainlen_pad, sizeof(uint8_t));
+   uint8_t * pu8_block_cipher_feed = (uint8_t *) calloc(AES128_KEY_SIZE, sizeof(uint8_t));
+   uint8_t * pu8_block_cipher_res = NULL;
+   uint16_t u16_cipherlen_res = 0;
+   
+   for (int i = 0; i < u16_num_iter; ++i)
+   {
+      
+      uint8_t a16_u8_plain_block[AES128_KEY_SIZE] = {0};
+      memcpy(a16_u8_plain_block, &pu8_plaintxt_pad[i*AES128_KEY_SIZE], AES128_KEY_SIZE);
+      e_status = FixedXOR(a16_u8_iv, a16_u8_plain_block, AES128_KEY_SIZE, AES128_KEY_SIZE, pu8_block_cipher_feed);
+      if (e_status != CRYPTO_OK)
+      {
+         break;
+      }
+
+      int32_t i32_cipher_res_len = 0;
+      e_status = EncryptAES128_ECB_OpenSSL(pu8_block_cipher_feed, AES128_KEY_SIZE, pu8_key, &pu8_block_cipher_res, &i32_cipher_res_len);
+      if (e_status != CRYPTO_OK)
+      {
+         break;
+      }
+      
+      memcpy(&pu8_temp_result[i*AES128_KEY_SIZE], pu8_block_cipher_res, AES128_KEY_SIZE);
+      memcpy(a16_u8_iv, pu8_block_cipher_res, AES128_KEY_SIZE);
+      u16_cipherlen_res += AES128_KEY_SIZE;
+
+      free(pu8_block_cipher_res);
+      pu8_block_cipher_res = NULL;
+      
+   }
+
+   if (pu8_block_cipher_feed)
+   {
+      free(pu8_block_cipher_feed);
+   }
+   pu8_block_cipher_feed = NULL;
+
+   if (pu8_block_cipher_res)
+   {
+      free(pu8_block_cipher_res);
+   }
+   pu8_block_cipher_res = NULL;
+
+   if (pu8_plaintxt_pad)
+   {
+      free(pu8_plaintxt_pad);
+   }
+   pu8_plaintxt_pad = NULL;
+
+   if (e_status == CRYPTO_OK)
+   {
+      *ppu8_ciphertxt = pu8_temp_result;
+      *pu16_cipherlen = u16_cipherlen_res;
+   }
+   
    return e_status;
 }
