@@ -43,6 +43,10 @@ static int32_t OBitflippingOracleCBC_conform_and_encrypt(struct OBitflippingOrac
 static int32_t OBitflippingOracleCBC_find_substring(uint8_t const * const pu8_base_str, 
                                                       uint16_t const u16_base_str_len);
 
+static int32_t OBitflippingOracleCBC_find_bytes(uint8_t const * const pu8_haystack,
+                                                uint16_t const u16_haystack_len, 
+                                                uint8_t const * const pu8_needle,
+                                                uint16_t const u16_needle_len);
 
 /***********************************************************************************************************************
  * PUBLIC FUNCTIONS
@@ -169,7 +173,7 @@ int32_t OBitflippingOracleCBC_decrypt(struct OBitflippingOracleCBC * po_this,
    {
       uint8_t * pu8_temp_buf = NULL;
       uint16_t u16_temp_buf_len = 0;
-      i32_result = DecryptAES128_CBC_OpenSSL(po_this->m_pu8_encrypted_str, po_this->m_u16_encrypted_len,
+      i32_result = AES128CBC_decrypt_OpenSSL(po_this->m_pu8_encrypted_str, po_this->m_u16_encrypted_len,
                                                 po_this->m_a_u8_aes_128_cbc_key, pu8_iv, 
                                                 &pu8_temp_buf, &u16_temp_buf_len);
       if (i32_result == E_BOC_OK)
@@ -362,7 +366,7 @@ static int32_t OBitflippingOracleCBC_AES128CBC_encrypt(struct OBitflippingOracle
       if (po_this->m_pu8_encrypted_str)
          free(po_this->m_pu8_encrypted_str);
       po_this->m_pu8_encrypted_str = NULL;
-      i32_result = EncryptAES128_CBC_OpenSSL(po_this->m_pu8_concat_str, po_this->m_u16_concat_str_len,
+      i32_result = AES128CBC_encrypt_OpenSSL(po_this->m_pu8_concat_str, po_this->m_u16_concat_str_len,
                                                 po_this->m_a_u8_aes_128_cbc_key, a_u8_iv,
                                                 &pu8_temp_buf, &u16_temp_buf_len);
       if (i32_result == E_BOC_OK)
@@ -413,13 +417,37 @@ static int32_t OBitflippingOracleCBC_find_substring(uint8_t const * const pu8_ba
    }
    else
    {
-      if (NULL != strstr(pu8_base_str, BOC_STR_TO_SEARCH))
+      i32_result = OBitflippingOracleCBC_find_bytes(pu8_base_str, u16_base_str_len,
+                                                      BOC_STR_TO_SEARCH, strlen(BOC_STR_TO_SEARCH));
+   }
+
+   return i32_result;
+}
+
+static int32_t OBitflippingOracleCBC_find_bytes(uint8_t const * const pu8_haystack,
+                                                uint16_t const u16_haystack_len, 
+                                                uint8_t const * const pu8_needle,
+                                                uint16_t const u16_needle_len)
+{
+   int32_t i32_result = E_BOC_NOT_FOUND;
+
+   if (pu8_haystack == NULL || pu8_needle == NULL)
+   {
+      i32_result = E_BOC_EINVAL;
+   }
+   else if (u16_haystack_len < u16_needle_len)
+   {
+      i32_result = E_BOC_EINLIM;
+   }
+   else
+   {
+      for (uint16_t u16_idx = 0; u16_idx < (u16_haystack_len-u16_needle_len); u16_idx++)
       {
-         i32_result = E_BOC_OK;
-      }
-      else
-      {
-         i32_result = E_BOC_NOT_FOUND;
+         if (0 == memcmp(&pu8_haystack[u16_idx], pu8_needle, u16_needle_len))
+         {
+            i32_result = E_BOC_OK;
+            break;
+         }
       }
    }
 

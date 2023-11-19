@@ -49,6 +49,11 @@ int main(void)
    else if (i32_result == E_BOC_NOT_FOUND)
    {
       printf("Result --> NOT FOUND...\n");
+      uint8_t * pu8_decrypted = NULL;
+      uint16_t u16_decrypted_len = 0;
+      i32_result = OBitflippingOracleCBC_decrypt(&o_oracle, &pu8_decrypted, &u16_decrypted_len, pu8_iv);
+      printf("  Decryption: %*s\n", u16_decrypted_len, pu8_decrypted);
+      free(pu8_decrypted);
    }
    else
    {
