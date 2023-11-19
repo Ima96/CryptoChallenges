@@ -827,6 +827,89 @@ crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
    return e_status;
 }
 
+crypto_status encryptBufferAesCbcStaticKey(uint8_t const * const pu8_buffer,
+                                             uint16_t const u16_bufferlen,
+                                             uint8_t * pu8_iv,
+                                             uint8_t ** pu8_ciphertext,
+                                             uint16_t * const u16_cipherlen)
+{
+   crypto_status e_status = CRYPTO_ERR;
+   uint8_t * pu8_temp_buffer = NULL;
+   uint16_t u16_temp_cipherlen = 0;
+
+   e_status = staticAesKeyCheckAndInit();
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
+      return e_status;
+   }
+
+   if (pu8_buffer == NULL || u16_bufferlen == 0)
+   {
+      DEBUG_CRYPTO("Error with input parameters...\n");
+      return CRYPTO_ERR;
+   }
+
+   if (pu8_iv == NULL)
+   {
+      e_status = GeneratePseudoRandomBytes(pu8_iv, AES128_KEY_SIZE);
+   }
+
+   e_status = AES128CBC_encrypt_OpenSSL(pu8_buffer, u16_bufferlen, 
+                                          vf_pu8_static_key, pu8_iv, 
+                                          &pu8_temp_buffer, &u16_temp_cipherlen);
+
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error with AES ECB encryption process...\n");
+      return e_status;
+   }
+
+   *pu8_ciphertext = pu8_temp_buffer;
+   *u16_cipherlen = u16_temp_cipherlen;
+
+   return e_status;
+}
+
+crypto_status decryptBufferAesCbcStaticKey(uint8_t const * const pu8_ciphertext,
+                                             uint16_t const u16_cipherlen,
+                                             uint8_t const * const pu8_iv,
+                                             uint8_t ** ppu8_plaintext,
+                                             int32_t * const pi32_plainlen)
+{
+   crypto_status e_status = CRYPTO_ERR;
+   uint8_t * pu8_temp_buffer = NULL;
+   uint16_t u16_temp_plainlen = 0;
+
+   e_status = staticAesKeyCheckAndInit();
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error initializing AES ECB Static key...\n");
+      return e_status;
+   }
+
+   if (pu8_ciphertext == NULL || u16_cipherlen == 0 || pu8_iv == NULL)
+   {
+      DEBUG_CRYPTO("Error with input parameters...\n");
+      return CRYPTO_ERR;
+   }
+
+   e_status = AES128CBC_decrypt_OpenSSL(pu8_ciphertext, u16_cipherlen, 
+                                          vf_pu8_static_key, pu8_iv, 
+                                          &pu8_temp_buffer, &u16_temp_plainlen);
+
+   if (e_status != CRYPTO_OK)
+   {
+      DEBUG_CRYPTO("Error with AES ECB encryption process...\n");
+      return e_status;
+   }
+
+   *ppu8_plaintext = pu8_temp_buffer;
+   *pi32_plainlen = u16_temp_plainlen;
+
+   return e_status;
+}
+
 uint8_t * vf_pu8_unknown_str = NULL;
 crypto_status baatOracleUnknownStrInit(uint8_t const * const pu8_unknown_str, uint16_t u16_len)
 {
@@ -1366,4 +1449,220 @@ crypto_status AES128CBC_encrypt_OpenSSL(uint8_t const * const pu8_plaintxt,
    }
    
    return e_status;
+}
+
+crypto_status AES128CBC_decrypt_and_validate_padding(uint8_t const * const pu8_ciphertext, 
+                                                      uint16_t const u16_cipherlen,
+                                                      uint8_t a16_u8_iv[AES128_KEY_SIZE])
+{
+   crypto_status e_retval = CRYPTO_PKCS7_ERR;
+
+   if (pu8_ciphertext == NULL || a16_u8_iv == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t * pu8_plaintext = NULL;
+      int32_t i32_plainlen = 0;
+      e_retval = decryptBufferAesCbcStaticKey(pu8_ciphertext, u16_cipherlen,
+                                                   a16_u8_iv, &pu8_plaintext, &i32_plainlen);
+
+      if (CRYPTO_OK == e_retval)
+      {
+         uint16_t u16_pad_count = 0;
+         e_retval = PCKS7_pad_validation(pu8_plaintext, i32_plainlen, AES128_KEY_SIZE, &u16_pad_count);
+      }
+      else
+      {
+         e_retval = CRYPTO_ERR_SSL;
+      }
+
+      if (pu8_plaintext)
+         free(pu8_plaintext);
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CBC_get_padding_byte_count(uint8_t const * const pu8_ciphertext, 
+                                                uint16_t const u16_cipherlen,
+                                                uint8_t a16_u8_iv[AES128_KEY_SIZE])
+{
+   crypto_status e_retval = CRYPTO_ERR;
+   
+   if (pu8_ciphertext == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t * pu8_temp_cipher = (uint8_t *) calloc(u16_cipherlen, sizeof(uint8_t));
+      memcpy(pu8_temp_cipher, pu8_ciphertext, u16_cipherlen);
+
+      e_retval = AES128CBC_decrypt_and_validate_padding(pu8_temp_cipher, u16_cipherlen, a16_u8_iv);
+      if (e_retval == CRYPTO_OK)
+      {
+         for (uint8_t u8_idx = 1; u8_idx <= AES128_KEY_SIZE + 1; u8_idx++)
+         {
+            uint16_t u16_ciph_idx = u16_cipherlen - (AES128_KEY_SIZE + u8_idx);
+            pu8_temp_cipher[u16_ciph_idx] ^= 0xff;
+
+            e_retval = AES128CBC_decrypt_and_validate_padding(pu8_temp_cipher, u16_cipherlen, a16_u8_iv);
+            if (e_retval == CRYPTO_PKCS7_ERR)
+            {
+               memcpy(pu8_temp_cipher, pu8_ciphertext, u16_cipherlen);
+               continue;
+            }
+            else
+            {
+               pu8_temp_cipher[u16_ciph_idx] ^= 0x11;
+               e_retval = AES128CBC_decrypt_and_validate_padding(pu8_temp_cipher, u16_cipherlen, a16_u8_iv);
+               if (e_retval == CRYPTO_PKCS7_ERR)
+               {
+                  memcpy(pu8_temp_cipher, pu8_ciphertext, u16_cipherlen);
+                  continue;
+               }
+               else
+               {
+                  e_retval = u8_idx - 1;
+                  break;
+               }
+            }
+         }
+         if (pu8_temp_cipher)
+            free(pu8_temp_cipher);
+      }
+      else
+      {
+         LOG_CRYPTO_ERROR("Error, original encrypted text has no valid padding...\n");
+      }
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CBC_padding_oracle_single_block_attack(uint8_t const * const pu8_cipherblock,
+                                                            uint8_t * pu8_cipher_out)
+{
+   crypto_status e_retval = CRYPTO_ERR;
+
+   if (pu8_cipherblock == NULL || pu8_cipher_out == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t a16_u8_zeroing_iv[AES128_KEY_SIZE] = {0};
+      uint8_t a16_u8_padding_iv[AES128_KEY_SIZE] = {0};
+
+      for (uint8_t u8_pad_val = 1; u8_pad_val <= AES128_KEY_SIZE; u8_pad_val++)
+      {
+         uint8_t u8_finding_idx = AES128_KEY_SIZE - u8_pad_val;
+         FixedXOR_SingleCharASCII(&a16_u8_zeroing_iv[u8_finding_idx], u8_pad_val, u8_pad_val, &a16_u8_padding_iv[u8_finding_idx]);
+
+         for (int16_t u16_candidate = 0; u16_candidate <= 0xFF; u16_candidate++)
+         {
+            a16_u8_padding_iv[u8_finding_idx] = u16_candidate;
+            e_retval = AES128CBC_decrypt_and_validate_padding(pu8_cipherblock, AES128_KEY_SIZE, a16_u8_padding_iv);
+            if (e_retval == CRYPTO_OK)
+            {
+               if (u8_pad_val == 1)
+               {
+                  a16_u8_padding_iv[u8_finding_idx-1] ^= 0x01;
+                  e_retval = AES128CBC_decrypt_and_validate_padding(pu8_cipherblock, AES128_KEY_SIZE,
+                                                                     a16_u8_padding_iv);
+                  if (e_retval != CRYPTO_OK)
+                  {
+                     // False positive, cointinue searching...
+                     continue;
+                  }
+               }
+               a16_u8_zeroing_iv[u8_finding_idx] = u16_candidate ^ u8_pad_val;
+               break;
+            }
+            if (u16_candidate == 0xFF)
+            {
+               LOG_CRYPTO_ERROR("Error - Could not find byte #%d... I do not know why...\n", u8_pad_val);
+               return CRYPTO_ERR;
+            }
+         }
+      }
+      memcpy(pu8_cipher_out, a16_u8_zeroing_iv, AES128_KEY_SIZE);
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CBC_padding_oracle_attack(uint8_t const * const pu8_ciphertext,
+                                                uint16_t const u16_cipherlen,
+                                                uint8_t a16_u8_iv[AES128_KEY_SIZE],
+                                                uint8_t ** ppu8_obt_plaintxt,
+                                                uint16_t * pu16_obt_plainlen)
+{
+   crypto_status e_retval = CRYPTO_ERR;
+
+   if (pu8_ciphertext == NULL || a16_u8_iv == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint16_t u16_num_blocks = u16_cipherlen / AES128_KEY_SIZE;
+      uint8_t * pu8_temp_result = (uint8_t *) calloc(u16_cipherlen, sizeof(uint8_t));
+
+      for (uint16_t u16_idx = 0; u16_idx < u16_num_blocks; u16_idx++)
+      {
+         uint8_t a16_u8_cipher_out[AES128_KEY_SIZE] = {0};
+         uint8_t a16_u8_plainblock[AES128_KEY_SIZE] = {0};
+         uint8_t a16_u8_prev_block[AES128_KEY_SIZE] = {0};
+
+         e_retval = AES128CBC_padding_oracle_single_block_attack(&pu8_ciphertext[u16_idx * AES128_KEY_SIZE], 
+                                                                  a16_u8_cipher_out);
+         if (e_retval == CRYPTO_OK)
+         {
+            if (u16_idx == 0)
+            {
+               memcpy(a16_u8_prev_block, a16_u8_iv, AES128_KEY_SIZE);
+            }
+            else
+            {
+               uint16_t u16_pev_block_idx = u16_idx - 1;
+               memcpy(a16_u8_prev_block, &pu8_ciphertext[u16_pev_block_idx * AES128_KEY_SIZE], AES128_KEY_SIZE);
+            }
+            FixedXOR(a16_u8_prev_block, a16_u8_cipher_out, AES128_KEY_SIZE, AES128_KEY_SIZE, a16_u8_plainblock);
+            memcpy(&pu8_temp_result[u16_idx * AES128_KEY_SIZE], a16_u8_plainblock, AES128_KEY_SIZE);
+         }
+         else
+         {
+            if (pu8_temp_result)
+               free(pu8_temp_result);
+            break;
+         }
+      }
+
+      if (e_retval == CRYPTO_OK)
+      {
+         uint8_t * pu8_unpad_result = NULL;
+         int32_t i32_unpad_result_len = 0;
+         e_retval = PKCS7_pad_strip(pu8_temp_result, u16_cipherlen, AES128_KEY_SIZE, 
+                                       &pu8_unpad_result, &i32_unpad_result_len);
+         if (CRYPTO_OK == e_retval)
+         {
+            *ppu8_obt_plaintxt = pu8_unpad_result;
+            *pu16_obt_plainlen = (uint16_t)i32_unpad_result_len;
+            if (pu8_temp_result)
+               free(pu8_temp_result);
+         }
+         else
+         {
+            if (pu8_temp_result)
+               free(pu8_temp_result);
+            if (pu8_unpad_result)
+               free(pu8_unpad_result);
+         }
+      }
+   }
+
+   return e_retval;
 }

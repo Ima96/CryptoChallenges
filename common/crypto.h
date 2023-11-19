@@ -25,10 +25,20 @@ extern "C" {
 
 /* Handy MACROs */
 #ifdef DEBUG_CRYPT
-#define DEBUG_CRYPTO(fmt, ...) {fflush(stdout); fprintf(stdout, "[CRYPTO_DEBUG] %s(%d): " fmt, __FUNCTION__, __LINE__, ## __VA_ARGS__); fflush(stdout); }
+#define DEBUG_CRYPTO(fmt, ...) {fflush(stdout); \
+                                 fprintf(stdout, "[CRYPTO_DEBUG] %s(%d): " fmt, \
+                                          __FUNCTION__, __LINE__, ## __VA_ARGS__); \
+                                 fflush(stdout); \
+                              }
 #else 
 #define DEBUG_CRYPTO(...)
 #endif
+
+#define LOG_CRYPTO_ERROR(fmt, ...) {fflush(stdout); \
+                                    fprintf(stdout, "[CRYPTO_ERROR] %s(%d): " fmt, \
+                                             __FUNCTION__, __LINE__, ## __VA_ARGS__); \
+                                    fflush(stdout); \
+                                 }
 
 /* Typedefs */
 typedef enum crypto_status
@@ -77,27 +87,23 @@ crypto_status BreakFixedXOR(uint8_t const * const encripted_buff,
                               uint16_t const encripted_buff_len,
 										uint8_t * const decripted_buff,
 										uint16_t * const decripted_buff_len,
-										float * const final_score
-                              );
+										float * const final_score);
 
 crypto_status BreakFixedASCIIXOR_Key(uint8_t const * const encripted_buff,
                                        uint16_t const encripted_buff_len,
-                                       uint8_t * const key
-                                       );
+                                       uint8_t * const key);
 
 crypto_status EncryptRepeatingKeyXor(uint8_t const * const plaintext,
                                        uint16_t const plain_len,
                                        uint8_t const * const key,
                                        uint16_t const key_len,
-                                       uint8_t * const ciphertext
-                                       );
+                                       uint8_t * const ciphertext);
 
 crypto_status ComputeBufHammingDist(uint8_t const * const buf1, 
                                     uint16_t const buf1_len,
                                     uint8_t const * const buf2,
                                     uint16_t const buf2_len,
-                                    uint16_t * res_dist
-                                    );
+                                    uint16_t * res_dist);
 
 void Guess_RKXOR_KeySize(uint8_t const * const bin_ciphertext,
                            uint16_t const bin_cipherlen,
@@ -111,20 +117,17 @@ crypto_status DecryptAES128_ECB_OpenSSL(uint8_t const * const ciphertext,
                                        uint16_t const cipherlen,
                                        uint8_t const * const key,
                                        uint8_t **plaintext,
-                                       int *plaintext_len
-                                       );
+                                       int *plaintext_len);
 
 crypto_status EncryptAES128_ECB_OpenSSL(uint8_t const * const pu8_plaintext,
                                        uint16_t const u16_plainlen,
                                        uint8_t const * const pu8_key,
                                        uint8_t **ppu8_cipherext,
-                                       int32_t * pi32_cipherlen
-                                       );
+                                       int32_t * pi32_cipherlen);
 
 crypto_status Detect_AES_ECB(uint8_t const * const pu8_buff,
                               uint16_t const u16_buff_len,
-                              uint16_t const u16_block_size
-                              );
+                              uint16_t const u16_block_size);
 
 crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_size, uint16_t const u16_block_size,
                         uint8_t ** pu8_outbuf, uint32_t * pu32_padded_size);
@@ -158,6 +161,18 @@ crypto_status decryptBufferAesEcbStaticKey(uint8_t const * const pu8_ciphertext,
                                              uint8_t ** ppu8_plaintext,
                                              int32_t * const pi32_plainlen);
 
+crypto_status encryptBufferAesCbcStaticKey(uint8_t const * const pu8_buffer,
+                                             uint16_t const u16_bufferlen,
+                                             uint8_t * pu8_iv,
+                                             uint8_t ** pu8_ciphertext,
+                                             uint16_t * const u16_cipherlen);
+
+crypto_status decryptBufferAesCbcStaticKey(uint8_t const * const pu8_ciphertext,
+                                             uint16_t const u16_cipherlen,
+                                             uint8_t const * const pu8_iv,
+                                             uint8_t ** ppu8_plaintext,
+                                             int32_t * const pi32_plainlen);
+
 crypto_status guessOracleBlockSize(uint16_t * u16_guessed_blocksize);
 
 crypto_status oneByteAtATime_ECB_Decryption(uint8_t const * const pu8_unknown_msg, uint16_t const u16_msg_len,
@@ -181,6 +196,13 @@ crypto_status AES128CBC_encrypt_OpenSSL(uint8_t const * const pu8_plaintxt,
                                        uint8_t const * const pu8_initial_iv,
                                        uint8_t ** const ppu8_ciphertxt,
                                        uint16_t * const pu16_cipherlen);
+
+crypto_status AES128CBC_padding_oracle_attack(uint8_t const * const pu8_ciphertext,
+                                                uint16_t const u16_cipherlen,
+                                                uint8_t a16_u8_iv[AES128_KEY_SIZE],
+                                                uint8_t ** ppu8_obt_plaintxt,
+                                                uint16_t * pu16_obt_plainlen);
+
 #ifdef __cplusplus
 }
 #endif

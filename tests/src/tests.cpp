@@ -215,8 +215,19 @@ TEST(Set2, ch16_bitflipping_cbc)
 {
    std::string cmd_result = exec("./ch16_bitflipping_cbc");
    
-   ASSERT_NE(std::string::npos, cmd_result.find(ch16_golden_result));
+   ASSERT_NE(std::string::npos, cmd_result.find(ch16_golden_result)) << 
+      "The otput from the command execution is:" << std::endl << cmd_result << std::endl;
 
    std::cout << "Found golden string in result --> " <<
       cmd_result.substr(cmd_result.find(ch16_golden_result), ch16_golden_result.length()) << std::endl;
+}
+
+TEST(Set3, ch17_cbc_padding_oracle)
+{
+   std::string cmd_result = exec("./ch17_cbc_padding_oracle");
+   
+   ASSERT_NE(std::string::npos, cmd_result.find(ch17_golden_result));
+
+   std::cout << "Found golden string in result --> " <<
+      cmd_result.substr(cmd_result.find(ch17_golden_result), ch17_golden_result.length()) << std::endl;
 }

@@ -57,3 +57,5 @@ std::string ch15_golden_result = "Valid PKCS#7 pad --> Plaintext(12): ICE ICE BA
                                  "Invalid PKCS#7 padding...";
 
 std::string ch16_golden_result = "Result --> FOUND!!";
+
+std::string ch17_golden_result = "Result --> SUCCES!!\n";
