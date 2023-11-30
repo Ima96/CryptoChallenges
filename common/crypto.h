@@ -75,12 +75,17 @@ typedef enum Ecrypto_aes_mode
    E_AES128_CBC   = 1   //!< AES128 CBC mode.
 } crypto_aes_mode_t;
 
-/* Public fuction definitions */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * This function takes two hex encoded strings in binary and XORs them to get the    *
- * resulting hex encoded in binary.                                                  *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-crypto_status FixedXOR(uint8_t *Buffer1, uint8_t *Buffer2, int Buff1_sz, int Buff2_sz, uint8_t *XORed);
+/***********************************************************************************************************************
+ *                                                    STRUCTS
+ **********************************************************************************************************************/
+/***********************************************************************************************************************
+ * @brief   Struct that holds the values for CTR function configuration.
+ **********************************************************************************************************************/
+struct SAES128CTR_config
+{
+   uint8_t  m_key[AES128_KEY_SIZE];    //!< AES128 key for the CTR buffer generation.
+   uint64_t m_nonce;                   //!< "Number ONCE" - unique number used in the generation of CTR buffer.
+};
 
 /***********************************************************************************************************************
  *                                                PUBLIC FUNCTIONS
@@ -633,6 +638,30 @@ crypto_status AES128CBC_padding_oracle_attack(uint8_t const * const pu8_cipherte
                                                 uint8_t a16_u8_iv[AES128_KEY_SIZE],
                                                 uint8_t ** ppu8_obt_plaintxt,
                                                 uint16_t * pu16_obt_plainlen);
+
+/***********************************************************************************************************************
+ * @brief   This function implements the cipher function of AES128 in CTR mode for a given CTR configuration that is 
+ *          formed by a key and a nonce. This cipher mode works in both directions, this same function is valid for both
+ *          the encryption and decryption of the plaintext / ciphertext. This works conforming first the CTR generation 
+ *          buffer for the given key and nonce and then XOR-ing the resulting buffer with the plaintext. The generation 
+ *          of the CTR buffer is done by forming a buffer of the nonce and the counter values, and encrypting this with 
+ *          \see EncryptAES128_ECB_OpenSSL() function.
+ * 
+ * @param pu8_buffer_in[in]      Pointer to the input buffer for encryption / decryption.
+ * @param u32_buffer_in_len[in]  Length of the input buffer.
+ * @param s_config[in]           Struct with the desired configuration of Key/Nonce for the operation.
+ * @param ppu8_buffer_out[out]   Output pointer to the memory address where the result will be stored.
+ * 
+ * @return crypto_status   The return code can be:
+ *                            - CRYPTO_OK:         successful completion of operations.
+ *                            - CRYPTO_INVAL:      input parameters are not valid.
+ *                            - CRYPTO_ERR:        generic error during operation.
+ *                            - CRYPTO_ERR_SSL:    error during OpenSSL crypto operations.
+ **********************************************************************************************************************/
+crypto_status AES128CTR_function(uint8_t const * const pu8_buffer_in,
+                                 uint32_t const u32_buffer_in_len,
+                                 struct SAES128CTR_config const s_config,
+                                 uint8_t ** ppu8_buffer_out);
 
 #ifdef __cplusplus
 }
