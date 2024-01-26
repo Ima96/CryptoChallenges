@@ -67,6 +67,8 @@ void PrintHex(uint8_t const * const pu8_buff, int32_t const i32_buff_len);
  **********************************************************************************************************************/
 int isLittleEndian(void);
 
+void ss_free(void * p_buffer, uint64_t u64_length);
+
 #ifdef __cplusplus
 }
 #endif

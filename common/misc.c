@@ -1,6 +1,10 @@
 
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
 #include "misc.h"
 
 uint16_t getFileSize(FILE *fip, uint8_t const filter)
@@ -113,4 +117,25 @@ void PrintHex(uint8_t const * const pu8_buff, int32_t const i32_buff_len)
       printf("%02X ", pu8_buff[i32_idx]);
    }
    printf("\n");
+}
+
+int isLittleEndian(void)
+{
+   int16_t i = 1;
+   int8_t *p = (int8_t *) &i;
+
+   if (p[0] == 1) 
+      return 1;
+   else 
+      return 0;
+}
+
+void ss_free(void * p_buffer, uint64_t u64_length)
+{
+   if (p_buffer)
+   {
+      memset(p_buffer, 0, u64_length);
+      free(p_buffer);
+      p_buffer = NULL;
+   }
 }

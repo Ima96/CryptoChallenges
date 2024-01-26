@@ -83,8 +83,13 @@ typedef enum Ecrypto_aes_mode
  **********************************************************************************************************************/
 struct SAES128CTR_config
 {
-   uint8_t  m_key[AES128_KEY_SIZE];    //!< AES128 key for the CTR buffer generation.
-   uint64_t m_nonce;                   //!< "Number ONCE" - unique number used in the generation of CTR buffer.
+   uint8_t  m_au8_key[AES128_KEY_SIZE];   //!< AES128 key for the CTR buffer generation.
+   union 
+   {
+      uint64_t m_u64_nonce;               //!< "Number ONCE" - unique number used in the generation of CTR buffer.
+      uint8_t m_u8_nonce[AES128_KEY_SIZE/2];    //!< Nonce bytes
+   };
+   
 };
 
 /***********************************************************************************************************************

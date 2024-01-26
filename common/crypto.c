@@ -26,7 +26,8 @@ static float english_freq[27] = {
     0.0063, 0.0198, 0.0011, 0.0168, 0.0006, 0.2022           // V-Z-SPACE
 };
 
-crypto_status FixedXOR(uint8_t *Buffer1, uint8_t *Buffer2, int Buff1_sz, int Buff2_sz, uint8_t *res)
+crypto_status FixedXOR(uint8_t const * const Buffer1, uint8_t const * const Buffer2, 
+                        int Buff1_sz, int Buff2_sz, uint8_t *res)
 {
 	crypto_status status = CRYPTO_ERR;
 
@@ -543,7 +544,7 @@ crypto_status PKCS7_pad(uint8_t const * const pu8_buf, uint32_t const u32_buf_si
 }
 
 crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const u32_buf_sz, 
-                                    uint16_t const u16_block_size, uint16_t * const u16_pad_size)
+                                    uint16_t const u16_block_size, uint16_t * const pu16_pad_size)
 {
    crypto_status e_status = CRYPTO_ERR;
 
@@ -575,8 +576,8 @@ crypto_status PCKS7_pad_validation(uint8_t const * const pu8_buf, uint32_t const
          }
          if (u8_idx == u8_num_pads)
          {
-            if (u16_pad_size)
-               *u16_pad_size = u8_num_pads;
+            if (pu16_pad_size)
+               *pu16_pad_size = u8_num_pads;
             e_status = CRYPTO_OK;
          }
       }
@@ -1661,6 +1662,92 @@ crypto_status AES128CBC_padding_oracle_attack(uint8_t const * const pu8_cipherte
             if (pu8_unpad_result)
                free(pu8_unpad_result);
          }
+      }
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CTR_gen_ctr_buff(struct SAES128CTR_config const s_ctr_config,
+                                       uint32_t const u32_length,
+                                       uint8_t ** ppu8_ctr_buff)
+{
+   crypto_status e_retval = CRYPTO_ERR;
+
+   if (ppu8_ctr_buff == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint32_t u32_ctr_buff_len = ((u32_length/8) + 1);
+      u32_ctr_buff_len = u32_ctr_buff_len % 2 ? u32_ctr_buff_len + 1 : u32_ctr_buff_len;
+      uint64_t * pu64_temp_buf = (uint64_t *) calloc(u32_ctr_buff_len, sizeof(uint64_t));
+
+      uint64_t u64_counter = 0;
+      for (uint32_t u32_idx = 0; u32_idx < u32_ctr_buff_len; u32_idx+=2)
+      {
+         pu64_temp_buf[u32_idx] = s_ctr_config.m_u64_nonce;
+         pu64_temp_buf[u32_idx+1] = u64_counter;
+         u64_counter++;
+      }
+
+      uint8_t * pu8_local_ctr_buff = NULL;
+      int32_t i32_local_ctr_bufflen = 0;
+      e_retval = EncryptAES128_ECB_OpenSSL((uint8_t *)pu64_temp_buf, u32_ctr_buff_len * 8,
+                                             s_ctr_config.m_au8_key, &pu8_local_ctr_buff, &i32_local_ctr_bufflen);
+
+      if (e_retval == CRYPTO_OK)
+      {
+         *ppu8_ctr_buff = pu8_local_ctr_buff;
+      }
+      else
+      {
+         if (pu8_local_ctr_buff)
+            free(pu8_local_ctr_buff);
+      }
+      
+      if (pu64_temp_buf)
+         free(pu64_temp_buf);
+      pu64_temp_buf = NULL;
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CTR_function(uint8_t const * const pu8_buffer_in,
+                                 uint32_t const u32_buffer_in_len,
+                                 struct SAES128CTR_config const s_config,
+                                 uint8_t ** ppu8_buffer_out)
+{
+   crypto_status e_retval = CRYPTO_ERR;
+
+   if (pu8_buffer_in == NULL || u32_buffer_in_len == 0 || ppu8_buffer_out == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t * pu8_ctr_buffer = NULL;
+      e_retval = AES128CTR_gen_ctr_buff(s_config, u32_buffer_in_len, &pu8_ctr_buffer);
+      
+      if (e_retval == CRYPTO_OK)
+      {
+         uint8_t * pu8_obt_plaintxt = (uint8_t *) calloc(u32_buffer_in_len + 1, sizeof(uint8_t));
+         e_retval = FixedXOR(pu8_buffer_in, pu8_ctr_buffer, u32_buffer_in_len, u32_buffer_in_len, pu8_obt_plaintxt);
+         if (e_retval == CRYPTO_OK)
+         {
+            pu8_obt_plaintxt[u32_buffer_in_len] = '\0';
+            *ppu8_buffer_out = pu8_obt_plaintxt;
+         }
+         else
+         {
+            if (pu8_obt_plaintxt)
+               free(pu8_obt_plaintxt);
+         }
+
+         if (pu8_ctr_buffer)
+            free(pu8_ctr_buffer);
       }
    }
 
