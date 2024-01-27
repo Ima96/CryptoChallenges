@@ -27,6 +27,8 @@ extern "C" {
 #include <stdlib.h>
 #include <math.h>
 
+#include "OArray.h"
+
 /***********************************************************************************************************************
  *                                                    DEFINES
  **********************************************************************************************************************/
@@ -667,6 +669,18 @@ crypto_status AES128CTR_function(uint8_t const * const pu8_buffer_in,
                                  uint32_t const u32_buffer_in_len,
                                  struct SAES128CTR_config const s_config,
                                  uint8_t ** ppu8_buffer_out);
+
+/***********************************************************************************************************************
+ * @brief 
+ * 
+ * @param po_cipherpool 
+ * @param u16_cipherpool_rows 
+ * @param pppu8_plaintxt_pool AUTENTICO LOCO
+ * @return crypto_status 
+ **********************************************************************************************************************/
+crypto_status AES128CTR_break_fixed_nonce(struct OArray const * const po_cipherpool,
+                                          uint16_t const u16_cipherpool_rows,
+                                          uint8_t *** pppu8_plaintxt_pool);
 
 #ifdef __cplusplus
 }

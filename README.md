@@ -29,8 +29,8 @@
 ### Set 3: Block & stream crypto
 - [x] Challenge 17: The CBC padding oracle
 - [x] Challenge 18: Implement CTR, the stream cipher mode
-- [ ] Challenge 19: Break fixed-nonce CTR mode using substitutions
-- [ ] Challenge 20: Break fixed-nonce CTR statistically
+- [x] Challenge 19: Break fixed-nonce CTR mode using substitutions
+- [x] Challenge 20: Break fixed-nonce CTR statistically
 - [ ] Challenge 21: Implement the MT19937 Mersenne Twister RNG
 - [ ] Challenge 22: Crack an MT19937 seed
 - [ ] Challenge 23: Clone an MT19937 RNG from its outputs

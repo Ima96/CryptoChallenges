@@ -126,7 +126,7 @@ crypto_status English_Score(uint8_t *phrase, int phrase_sz, float *score)
 		chi2 += difference*difference/expected_count;
 	}
 
-	*score = chi2+ignored;
+	*score = chi2+(ignored*20); // Punish harder the ignored characters
 	status = CRYPTO_OK;
 
 	return status;
@@ -196,7 +196,7 @@ crypto_status BreakFixedASCIIXOR_Key(	uint8_t const * const encripted_buff,
 	decryption_attempt = (uint8_t *) malloc(encripted_buff_len * sizeof(uint8_t));
 	if (!decryption_attempt)
 		return CRYPTO_ERR;
-	for (uint8_t i = 32; i < 127; i++)
+	for (uint16_t i = 0; i < 256; i++)
 	{
 		uint8_t current_key_attempt;
 		//uint8_t decryption_attempt[string_sz];
@@ -1748,6 +1748,88 @@ crypto_status AES128CTR_function(uint8_t const * const pu8_buffer_in,
 
          if (pu8_ctr_buffer)
             free(pu8_ctr_buffer);
+      }
+   }
+
+   return e_retval;
+}
+
+crypto_status AES128CTR_break_fixed_nonce(struct OArray const * const po_cipherpool,
+                                          uint16_t const u16_cipherpool_rows,
+                                          uint8_t *** pppu8_plaintxt_pool)
+{
+   crypto_status e_retval = CRYPTO_ERR;
+
+   if (po_cipherpool == NULL || u16_cipherpool_rows == 0 || pppu8_plaintxt_pool == NULL)
+   {
+      e_retval = CRYPTO_INVAL;
+   }
+   else
+   {
+      // Get the ciphertext with smallest length.
+      uint32_t u32_smallest_length = UINT32_MAX;
+      for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+      {
+         if (po_cipherpool[u16_idx].m_u32_length < u32_smallest_length)
+            u32_smallest_length = po_cipherpool[u16_idx].m_u32_length;
+      }
+
+      // Reserve memory for the plaintext pool
+      uint8_t ** ppu8_aux_plaintext = (uint8_t **) calloc(u16_cipherpool_rows, sizeof(uint8_t *));
+      for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+      {
+         ppu8_aux_plaintext[u16_idx] = (uint8_t *) calloc(u32_smallest_length + 1, sizeof(uint8_t));
+      }
+
+      // Get plaintexts
+      uint8_t * pu8_aux_buffer = malloc(u16_cipherpool_rows * sizeof(uint8_t));
+      for (uint32_t u32_idx = 0; u32_idx < u32_smallest_length; u32_idx++)
+      {
+         uint8_t u8_current_idx_key = 0;
+         
+         for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+         {
+            pu8_aux_buffer[u16_idx] = po_cipherpool[u16_idx].m_pu8_data[u32_idx];
+         }
+         
+         e_retval = BreakFixedASCIIXOR_Key(pu8_aux_buffer, u32_smallest_length, &u8_current_idx_key);
+         memset(pu8_aux_buffer, 0, u32_smallest_length);
+         
+         if (e_retval == CRYPTO_OK)
+         {
+            for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+            {
+               ppu8_aux_plaintext[u16_idx][u32_idx] = po_cipherpool[u16_idx].m_pu8_data[u32_idx] ^ u8_current_idx_key;
+            }
+         }
+         else
+         {
+            break;
+         }
+      }
+
+      if (pu8_aux_buffer != NULL)
+         free(pu8_aux_buffer);
+      pu8_aux_buffer = NULL;
+
+      if (e_retval == CRYPTO_OK)
+      {
+         for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+         {
+            ppu8_aux_plaintext[u16_idx][u32_smallest_length] = '\0';
+         }
+         *pppu8_plaintxt_pool = ppu8_aux_plaintext;
+      }
+      else
+      {
+         // Clean-up
+         for (uint16_t u16_idx = 0; u16_idx < u16_cipherpool_rows; u16_idx++)
+         {
+            free(ppu8_aux_plaintext[u16_idx]);
+            ppu8_aux_plaintext[u16_idx] = NULL;
+         }
+         free(ppu8_aux_plaintext);
+         ppu8_aux_plaintext = NULL;
       }
    }
 
