@@ -13,6 +13,7 @@
  **********************************************************************************************************************/
 #include <iostream>
 #include <stdint.h>
+#include <random>
 // Exec command
 #include <cstdio>
 #include <memory>
@@ -22,7 +23,7 @@
 
 #include "gtest/gtest.h"
 #include "golden.h"
-// #include "crypto.h"
+#include "crypto.h"
 // #include "encodings.h"
 // #include "misc.h"
 
@@ -230,4 +231,38 @@ TEST(Set3, ch17_cbc_padding_oracle)
 
    std::cout << "Found golden string in result --> " <<
       cmd_result.substr(cmd_result.find(ch17_golden_result), ch17_golden_result.length()) << std::endl;
+}
+
+TEST(Set3, ch21_MT19937)
+{
+   // C++ libray MT19937
+   std::mt19937 mt_rand(5489);
+
+   // Cryptopals library
+   struct OMT19937 o_mt;
+   OMT19937_init(&o_mt);
+
+   OMT19937_seed_mt(&o_mt, 5489);
+
+   for (int i = 0; i < 10000000; i++)
+   {
+      uint32_t u32_clib = mt_rand();
+      uint32_t u32_cryptolib = OMT19937_get_num(&o_mt);
+      //std::cout << "C lib: " << u32_clib << " cryptopals lib: " << u32_cryptolib << std::endl;
+      ASSERT_EQ(u32_clib, u32_cryptolib);
+   }
+
+   uint32_t u32_seed2 = std::time(0);
+   mt_rand.seed(u32_seed2);
+
+   OMT19937_seed_mt(&o_mt, u32_seed2);
+
+   for (int i = 0; i < 10000000; i++)
+   {
+      uint32_t u32_clib = mt_rand();
+      uint32_t u32_cryptolib = OMT19937_get_num(&o_mt);
+      //std::cout << "C lib: " << u32_clib << " cryptopals lib: " << u32_cryptolib << std::endl;
+      ASSERT_EQ(u32_clib, u32_cryptolib);
+   }
+
 }

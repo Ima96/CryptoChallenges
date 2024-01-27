@@ -30,4 +30,5 @@ target_link_libraries(
       gtest 
       gtest_main
       pthread
+      cryptopals
 )
