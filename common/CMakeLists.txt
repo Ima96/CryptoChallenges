@@ -4,7 +4,8 @@ add_library(encodings SHARED
 
 add_library(cryptopals SHARED
 	crypto.h
-	crypto.c)
+	crypto.c
+   OMT19937.c)
 
 add_library(misc SHARED
 	misc.h
