@@ -32,7 +32,7 @@
 - [x] Challenge 19: Break fixed-nonce CTR mode using substitutions
 - [x] Challenge 20: Break fixed-nonce CTR statistically
 - [x] Challenge 21: Implement the MT19937 Mersenne Twister RNG
-- [ ] Challenge 22: Crack an MT19937 seed
+- [x] Challenge 22: Crack an MT19937 seed
 - [ ] Challenge 23: Clone an MT19937 RNG from its outputs
 - [ ] Challenge 24: Create the MT 19937 stream cipher and break it
 
