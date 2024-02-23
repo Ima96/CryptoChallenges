@@ -3,7 +3,7 @@
  * Description: Source file containing the necessary definitions	 *
  * 				for some cryptographic operations and variables.	 *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
+#define _GNU_SOURCE     //!< GNU specific for memmem()
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/evp.h>
@@ -25,6 +25,14 @@ static float english_freq[27] = {
     0.0603, 0.0113, 0.0015, 0.0403, 0.0481, 0.0792, 0.0257,  // O-U
     0.0063, 0.0198, 0.0011, 0.0168, 0.0006, 0.2022           // V-Z-SPACE
 };
+
+static uint32_t MT19937_32_untemper_right_shift(uint32_t const u32_num, 
+                                                uint32_t const u32_shift, 
+                                                uint32_t const u32_mask);
+                                             
+static uint32_t MT19937_32_untemper_left_shift(uint32_t const u32_num, 
+                                                uint32_t const u32_shift, 
+                                                uint32_t const u32_mask);
 
 crypto_status FixedXOR(uint8_t const * const Buffer1, uint8_t const * const Buffer2, 
                         int Buff1_sz, int Buff2_sz, uint8_t *res)
@@ -1834,4 +1842,280 @@ crypto_status AES128CTR_break_fixed_nonce(struct OArray const * const po_cipherp
    }
 
    return e_retval;
+}
+
+uint32_t MT19937_32_untemper_fnct(uint32_t const u32_original_mt_val)
+{
+   #define OMT19937_U   11U
+   #define OMT19937_D   0xFFFFFFFF
+
+   #define OMT19937_S   7U
+   #define OMT19937_B   0x9D2C5680
+
+   #define OMT19937_T   15U
+   #define OMT19937_C   0xEFC60000
+
+   #define OMT19937_L   18U
+
+   uint32_t u32_ret_val = 0;
+
+   u32_ret_val = MT19937_32_untemper_right_shift(u32_original_mt_val, OMT19937_L, 0xFFFFFFFF);
+   u32_ret_val = MT19937_32_untemper_left_shift(u32_ret_val, OMT19937_T, OMT19937_C);
+   u32_ret_val = MT19937_32_untemper_left_shift(u32_ret_val, OMT19937_S, OMT19937_B);
+   u32_ret_val = MT19937_32_untemper_right_shift(u32_ret_val, OMT19937_U, OMT19937_D);
+
+   return u32_ret_val;
+}
+
+static uint32_t MT19937_32_untemper_right_shift(uint32_t const u32_num, 
+                                                uint32_t const u32_shift, 
+                                                uint32_t const u32_mask)
+{
+   uint32_t u32_result = 0;
+   for (int8_t i8_bit = 31; i8_bit >= 0; i8_bit--)
+   {
+      if (i8_bit >= (32 - u32_shift))
+      {
+         u32_result |= ((1 << i8_bit) & u32_num);
+      }
+      else
+      {
+         uint32_t u32_shifted_known = u32_result & (1 << (i8_bit + u32_shift));
+         u32_result |= (((u32_shifted_known & u32_mask) >> u32_shift) ^ (u32_num & (1 << i8_bit)));
+      }
+   }
+
+   return u32_result;
+}
+
+static uint32_t MT19937_32_untemper_left_shift(uint32_t const u32_num, 
+                                                uint32_t const u32_shift, 
+                                                uint32_t const u32_mask)
+{
+   uint32_t u32_result = 0;
+   for (int8_t i8_bit = 0; i8_bit < 32; i8_bit++)
+   {
+      if (i8_bit < u32_shift)
+      {
+         u32_result |= ((1 << i8_bit) & u32_num);
+      }
+      else
+      {
+         uint32_t u32_shifted_known = (u32_result & (1 << (i8_bit - u32_shift))) << u32_shift;
+         u32_result |= (((u32_shifted_known & u32_mask)) ^ (u32_num & (1 << i8_bit)));
+      }
+   }
+
+   return u32_result;
+}
+
+static crypto_status MT19937_32_fnct(uint8_t const * const pu8_buffer,
+                                       uint32_t const u32_bufferlen,
+                                       struct OMT19937 * const po_mt,
+                                       uint8_t ** ppu8_result)
+{
+   crypto_status e_ret = CRYPTO_ERR;
+
+   if (pu8_buffer == NULL || u32_bufferlen == 0 || ppu8_result == NULL || po_mt == NULL)
+   {
+      e_ret = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t u8_round = 0;
+      if (u32_bufferlen < 4)
+      {
+         u8_round = 4 - u32_bufferlen;
+      }
+      else if ((u32_bufferlen % 4) != 0)
+      {
+         u8_round = 4 - (u32_bufferlen % 4);
+      }
+      uint8_t * pu8_stream_seq = (uint8_t *) calloc(u32_bufferlen + u8_round, sizeof(uint8_t));
+      for (uint32_t u32_idx = 0; u32_idx < u32_bufferlen; u32_idx += 4)
+      {
+         uint32_t u32_rnd_num = OMT19937_get_num(po_mt);
+         pu8_stream_seq[u32_idx]    = (u32_rnd_num & 0xFF000000) >> 24;
+         pu8_stream_seq[u32_idx+1]  = (u32_rnd_num & 0x00FF0000) >> 16;
+         pu8_stream_seq[u32_idx+2]  = (u32_rnd_num & 0x0000FF00) >> 8;
+         pu8_stream_seq[u32_idx+3]  = (u32_rnd_num & 0x000000FF);
+      }
+
+      uint8_t * pu8_auxbuf = (uint8_t *) calloc(u32_bufferlen+1, sizeof(uint8_t));
+      e_ret = FixedXOR(pu8_buffer, pu8_stream_seq, u32_bufferlen, u32_bufferlen, pu8_auxbuf);
+
+      if (e_ret == CRYPTO_OK)
+      {
+         pu8_auxbuf[u32_bufferlen] = '\0';
+         *ppu8_result = pu8_auxbuf;
+      }
+      else
+      {
+         free(pu8_auxbuf);
+         pu8_auxbuf = NULL;
+      }
+
+      free(pu8_stream_seq);
+      pu8_stream_seq = NULL;
+   }
+
+   return e_ret;
+}
+
+struct OMT19937 * pv_o_mt_cipher = NULL;
+crypto_status MT19937_32_cipher(uint8_t const * const pu8_plaintxt,
+                                 uint32_t const u32_plainlen,
+                                 uint16_t const u16_seed,
+                                 uint8_t ** ppu8_ciphertext)
+{
+   if (pv_o_mt_cipher == NULL)
+   {
+      struct OMT19937 o_mt_temp;
+      OMT19937_init(&o_mt_temp);
+      OMT19937_seed_mt(&o_mt_temp, u16_seed);
+
+      pv_o_mt_cipher = (struct OMT19937 *) malloc(sizeof(struct OMT19937));
+      memcpy(pv_o_mt_cipher, &o_mt_temp, sizeof(struct OMT19937));
+   }
+
+   return MT19937_32_fnct(pu8_plaintxt, u32_plainlen, pv_o_mt_cipher, ppu8_ciphertext);
+}
+
+struct OMT19937 * pv_o_mt_decipher = NULL;
+crypto_status MT19937_32_decipher(uint8_t const * const pu8_ciphertext,
+                                 uint32_t const u32_cipherlen,
+                                 uint16_t const u16_seed,
+                                 uint8_t ** ppu8_plaintxt)
+{
+   if (pv_o_mt_decipher == NULL)
+   {
+      struct OMT19937 o_mt_temp;
+      OMT19937_init(&o_mt_temp);
+      OMT19937_seed_mt(&o_mt_temp, u16_seed);
+
+      pv_o_mt_decipher = (struct OMT19937 *) malloc(sizeof(struct OMT19937));
+      memcpy(pv_o_mt_decipher, &o_mt_temp, sizeof(struct OMT19937));
+   }
+
+   return MT19937_32_fnct(pu8_ciphertext, u32_cipherlen, pv_o_mt_decipher, ppu8_plaintxt);
+}
+
+crypto_status MT19937_32_break_16bit_seed(uint8_t const * const pu8_ciphertxt,
+                                          uint32_t const u32_cipherlen,
+                                          uint8_t const * const pu8_known_plaintext,
+                                          uint16_t * const pu16_found_seed,
+                                          uint8_t ** ppu8_plaintext)
+{
+   crypto_status e_res = CRYPTO_ERR;
+
+   if (pu8_ciphertxt == NULL || pu8_known_plaintext == NULL || ppu8_plaintext == NULL || pu16_found_seed == NULL)
+   {
+      e_res = CRYPTO_INVAL;
+   }
+   else
+   {
+      uint8_t * pu8_deciphertxt = NULL;
+      uint16_t u16_found_seed = 0;
+      for (uint16_t u16_idx = 0;; u16_idx++)
+      {
+         struct OMT19937 o_aux_mt;
+         OMT19937_init(&o_aux_mt);
+         OMT19937_seed_mt(&o_aux_mt, u16_idx);
+         if (pu8_deciphertxt)
+            free(pu8_deciphertxt);
+         e_res = MT19937_32_fnct(pu8_ciphertxt, u32_cipherlen, &o_aux_mt, &pu8_deciphertxt);
+
+         if (NULL != memmem(pu8_deciphertxt, u32_cipherlen, pu8_known_plaintext, strlen(pu8_known_plaintext)))
+         {
+            u16_found_seed = u16_idx;
+            break;
+         }
+
+         if (u16_idx == UINT16_MAX - 1 || e_res != CRYPTO_OK)
+         {
+            e_res = CRYPTO_ERR;
+            break;
+         }
+      }
+
+      if (e_res == CRYPTO_OK)
+      {
+         *ppu8_plaintext = pu8_deciphertxt;
+         *pu16_found_seed = u16_found_seed;
+      }
+   }
+
+   return e_res;
+}
+
+crypto_status MT19937_32_gen_16byte_token(uint8_t ** ppu8_token)
+{
+   crypto_status e_res = CRYPTO_ERR;
+
+   if (ppu8_token == NULL)
+   {
+      e_res = CRYPTO_INVAL;
+   }
+   else
+   {
+      struct OMT19937 o_loc_mt;
+      OMT19937_init(&o_loc_mt);
+
+      uint16_t u16_seed = (time(0) & 0xFFFF);
+      OMT19937_seed_mt(&o_loc_mt, u16_seed);
+
+      uint8_t * pu8_aux_token = (uint8_t *) calloc(16, sizeof(uint8_t));
+
+      for (uint32_t u32_idx = 0; u32_idx < 16; u32_idx += 4)
+      {
+         uint32_t u32_rnd_num = OMT19937_get_num(&o_loc_mt);
+         pu8_aux_token[u32_idx]    = (u32_rnd_num & 0xFF000000) >> 24;
+         pu8_aux_token[u32_idx+1]  = (u32_rnd_num & 0x00FF0000) >> 16;
+         pu8_aux_token[u32_idx+2]  = (u32_rnd_num & 0x0000FF00) >> 8;
+         pu8_aux_token[u32_idx+3]  = (u32_rnd_num & 0x000000FF);
+      }
+
+      *ppu8_token = pu8_aux_token;
+      e_res = CRYPTO_OK;
+   }
+
+   return e_res;
+}
+
+crypto_status MT19937_32_verify_token(uint8_t const a16u8_token[16])
+{
+   crypto_status e_ret = CRYPTO_ERR;
+
+   for (uint32_t u32_idx = 0; u32_idx < UINT16_MAX; ++u32_idx)
+   {
+      struct OMT19937 o_loc_mt;
+      OMT19937_init(&o_loc_mt);
+      OMT19937_seed_mt(&o_loc_mt, u32_idx);
+
+      for (uint8_t u8_sub_idx = 0; u8_sub_idx < 16; u8_sub_idx += 4)
+      {
+         uint32_t u32_rng_gen = OMT19937_get_num(&o_loc_mt);
+         uint32_t u32_token_num = 0;
+         u32_token_num |= a16u8_token[u8_sub_idx] << 24;
+         u32_token_num |= a16u8_token[u8_sub_idx+1] << 16;
+         u32_token_num |= a16u8_token[u8_sub_idx+2] << 8;
+         u32_token_num |= a16u8_token[u8_sub_idx+3];
+
+         if (u32_rng_gen != u32_token_num)
+         {
+            break;
+         }
+         else if (u8_sub_idx == 12)
+         {
+            e_ret = CRYPTO_OK;
+         }
+      }
+
+      if (CRYPTO_OK == e_ret)
+      {
+         break;
+      }
+   }
+
+   return e_ret;
 }

@@ -51,4 +51,4 @@ void OMT19937_set_gen_state(struct OMT19937 * po_this, uint32_t au32_gen_state[O
  * @param po_this[in/out]  Pointer to the object.
  * @return uint32_t  Returned random value.
  **********************************************************************************************************************/
-uint32_t OMT19937_get_num(struct OMT19937 * po_this);
+uint32_t OMT19937_get_num(struct OMT19937 * const po_this);

@@ -683,6 +683,61 @@ crypto_status AES128CTR_break_fixed_nonce(struct OArray const * const po_cipherp
                                           uint16_t const u16_cipherpool_rows,
                                           uint8_t *** pppu8_plaintxt_pool);
 
+/***********************************************************************************************************************
+ * @brief 
+ * 
+ * @param u32_original_mt_val 
+ * @return uint32_t 
+ **********************************************************************************************************************/
+uint32_t MT19937_32_untemper_fnct(uint32_t const u32_original_mt_val);
+
+/***********************************************************************************************************************
+ * @brief 
+ * 
+ * @param pu8_buffer 
+ * @param u32_bufferlen 
+ * @param u16_seed 
+ * @param ppu8_result 
+ * @return crypto_status 
+ **********************************************************************************************************************/
+crypto_status MT19937_32_break_16bit_seed(uint8_t const * const pu8_ciphertxt,
+                                          uint32_t const u32_cipherlen,
+                                          uint8_t const * const pu8_known_plaintext,
+                                          uint16_t * const pu16_found_seed,
+                                          uint8_t ** ppu8_plaintext);
+
+/***********************************************************************************************************************
+ * @brief 
+ * 
+ * @param pu8_plaintxt 
+ * @param u32_plainlen 
+ * @param u16_seed 
+ * @param ppu8_ciphertext 
+ * @return crypto_status 
+ **********************************************************************************************************************/
+crypto_status MT19937_32_cipher(uint8_t const * const pu8_plaintxt,
+                                 uint32_t const u32_plainlen,
+                                 uint16_t const u16_seed,
+                                 uint8_t ** ppu8_ciphertext);
+
+/***********************************************************************************************************************
+ * @brief 
+ * 
+ * @param pu8_ciphertext 
+ * @param u32_cipherlen 
+ * @param u16_seed 
+ * @param ppu8_plaintxt 
+ * @return crypto_status 
+ **********************************************************************************************************************/
+crypto_status MT19937_32_decipher(uint8_t const * const pu8_ciphertext,
+                                 uint32_t const u32_cipherlen,
+                                 uint16_t const u16_seed,
+                                 uint8_t ** ppu8_plaintxt);
+
+crypto_status MT19937_32_gen_16byte_token(uint8_t ** ppu8_token);
+
+crypto_status MT19937_32_verify_token(uint8_t const a16u8_token[16]);
+
 #ifdef __cplusplus
 }
 #endif

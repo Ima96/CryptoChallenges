@@ -36,7 +36,7 @@
 #define OMT19937_F   1812433253
 
 static void OMT19937_twist(struct OMT19937 * po_this);
-static uint32_t OMT19937_extract_number(struct OMT19937 * po_this);
+static uint32_t OMT19937_extract_number(struct OMT19937 * const po_this);
 
 static const uint64_t vf_u32_lower_mask = ((uint32_t)1 << OMT19937_R) - 1;
 static const uint64_t vf_u32_upper_mask = (((uint64_t)1 << OMT19937_W) - 1) - vf_u32_lower_mask;
@@ -57,7 +57,7 @@ static void OMT19937_twist(struct OMT19937 * po_this)
    po_this->m_u32_index = 0;
 }
 
-static uint32_t OMT19937_extract_number(struct OMT19937 * po_this)
+static uint32_t OMT19937_extract_number(struct OMT19937 * const po_this)
 {
    if (po_this->m_u32_index >= OMT19937_N)
    {
@@ -67,13 +67,6 @@ static uint32_t OMT19937_extract_number(struct OMT19937 * po_this)
          OMT19937_seed_mt(po_this, 5489);
       }
       OMT19937_twist(po_this);
-
-      printf("Original initial states: \n");
-      for (uint32_t u32_idx = 0; u32_idx < OMT19937_N; u32_idx++)
-      {
-         printf("%u ", po_this->m_au32_mt[u32_idx]);
-      }
-      printf("\n\n");
    }
 
    uint32_t u32_y = po_this->m_au32_mt[po_this->m_u32_index];
@@ -114,7 +107,7 @@ void OMT19937_set_gen_state(struct OMT19937 * po_this, uint32_t au32_gen_state[O
    po_this->m_u32_index = u32_gen_idx;
 }
 
-uint32_t OMT19937_get_num(struct OMT19937 * po_this)
+uint32_t OMT19937_get_num(struct OMT19937 * const po_this)
 {
    return OMT19937_extract_number(po_this);
 }
